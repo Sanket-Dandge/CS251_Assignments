@@ -2,16 +2,26 @@
 
 %}
 
+STRING (\"([^"\n]|\\\"|\\\n)*\")|(\'([^'\n]|\\\'|\\\n)*\')
 LONG_BRACKETS \[\[[^\]\]]*?\]\]
+
+DEC [0-9]
+DEC_EXP ((E|e)[\+|-]?[0-9])
+DEC_FLOAT ({DEC}*\.{DEC}+|{DEC}+\.{DEC}*){DEC_EXP}?|{DEC}+{DEC_EXP}
+
+HEX [0-9a-fA-F]
+HEX_EXP ((P|p)[\+|-]?[0-9])
+HEX_FLOAT 0(x|X)(({HEX}*\.{HEX}+|{HEX}+\.{HEX}*){HEX_EXP}?|{HEX}+{HEX_EXP})
 
 %%
 --{LONG_BRACKETS}             {printf("COMMENT_LONG       %s\n", yytext);}
 --.*                          {printf("COMMENT_SHORT      %s\n", yytext);}
 
-\"([^"\n]|\\\"|\\\n)*\"       {printf("CONST_STRING       %s\n", yytext);}
+{STRING}                      {printf("CONST_STRING       %s\n", yytext);}
 {LONG_BRACKETS}               {printf("CONST_STRING       %s\n", yytext);}
 
-[0-9]+	{printf("%s -> Number\n", yytext);}
+{DEC_FLOAT}|{HEX_FLOAT}       {printf("CONST_FLOAT        %s\n", yytext);}
+{DEC}+|0(x|X){HEX}+           {printf("CONST_INTEGER      %s\n", yytext);}
 
 "and"                         {printf("KEYWORD_AND        %s\n", yytext);}
 "break"                       {printf("KEYWORD_BREAK      %s\n", yytext);}
@@ -72,13 +82,14 @@ LONG_BRACKETS \[\[[^\]\]]*?\]\]
 
 
 [a-zA-Z_][a-zA-Z0-9_]*	      {printf("IDENTIFIER         %s\n", yytext);}
+
 \n|" "|\t|\r|\f|\v {}
+.  {printf("Unmatched %s", yytext);}
 %%
 
 int yywrap(void){return 1;}
 int main()
 {
-  printf("Enter String\n");
   yylex();
 }
 
