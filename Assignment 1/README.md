@@ -28,3 +28,5 @@
         ```sh
         ./lua_lexical_analyser.o < test.lua
         ```
+## References
+1. [Official Lua Documentation](https://www.lua.org/manual/5.4/)

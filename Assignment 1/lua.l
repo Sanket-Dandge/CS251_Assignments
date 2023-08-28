@@ -83,8 +83,8 @@ HEX_FLOAT 0(x|X)(({HEX}*\.{HEX}+|{HEX}+\.{HEX}*){HEX_EXP}?|{HEX}+{HEX_EXP})
 
 [a-zA-Z_][a-zA-Z0-9_]*	      {printf("IDENTIFIER         %s\n", yytext);}
 
-\n|" "|\t|\r|\f|\v {}
-.  {printf("Unmatched %s", yytext);}
+\n|" "|\t|\r|\f|\v            {/*Ignore the white space*/}
+.                             {printf("Invalid token      `%s`\n", yytext);}
 %%
 
 int yywrap(void){return 1;}
