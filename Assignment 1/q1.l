@@ -5,73 +5,73 @@
 LONG_BRACKETS \[\[[^\]\]]*?\]\]
 
 %%
---{LONG_BRACKETS}             {printf("COMMENT_LONG \t\t%s\n", yytext);}
---.*                          {printf("COMMENT_SHORT \t\t%s\n", yytext);}
+--{LONG_BRACKETS}             {printf("COMMENT_LONG       %s\n", yytext);}
+--.*                          {printf("COMMENT_SHORT      %s\n", yytext);}
 
-\"([^"\n]|\\\"|\\\n)*\"       {printf("CONST_STRING \t\t%s\n", yytext);}
-{LONG_BRACKETS}               {printf("CONST_STRING \t\t%s\n", yytext);}
+\"([^"\n]|\\\"|\\\n)*\"       {printf("CONST_STRING       %s\n", yytext);}
+{LONG_BRACKETS}               {printf("CONST_STRING       %s\n", yytext);}
 
 [0-9]+	{printf("%s -> Number\n", yytext);}
 
-"and"      {printf("KEYWORD_AND \n");}
-"break"    {printf("KEYWORD_BREAK \n");}
-"do"       {printf("KEYWORD_DO \n");}
-"else"     {printf("KEYWORD_ELSE \n");}
-"elseif"   {printf("KEYWORD_ELSEIF \n");}
-"end"      {printf("KEYWORD_END \n");}
-"false"    {printf("KEYWORD_FALSE \n");}
-"for"      {printf("KEYWORD_FOR \n");}
-"function" {printf("KEYWORD_FUNCTION \n");}
-"goto"     {printf("KEYWORD_GOTO \n");}
-"if"       {printf("KEYWORD_IF \n");}
-"in"       {printf("KEYWORD_IN \n");}
-"local"    {printf("KEYWORD_LOCAL \n");}
-"nil"      {printf("KEYWORD_NIL \n");}
-"not"      {printf("KEYWORD_NOT \n");}
-"or"       {printf("KEYWORD_OR \n");}
-"repeat"   {printf("KEYWORD_REPEAT \n");}
-"return"   {printf("KEYWORD_RETURN \n");}
-"then"     {printf("KEYWORD_THEN \n");}
-"true"     {printf("KEYWORD_TRUE \n");}
-"until"    {printf("KEYWORD_UNTIL \n");}
-"while"    {printf("KEYWORD_WHILE \n");}
+"and"                         {printf("KEYWORD_AND        %s\n", yytext);}
+"break"                       {printf("KEYWORD_BREAK      %s\n", yytext);}
+"do"                          {printf("KEYWORD_DO         %s\n", yytext);}
+"else"                        {printf("KEYWORD_ELSE       %s\n", yytext);}
+"elseif"                      {printf("KEYWORD_ELSEIF     %s\n", yytext);}
+"end"                         {printf("KEYWORD_END        %s\n", yytext);}
+"false"                       {printf("KEYWORD_FALSE      %s\n", yytext);}
+"for"                         {printf("KEYWORD_FOR        %s\n", yytext);}
+"function"                    {printf("KEYWORD_FUNCTION   %s\n", yytext);}
+"goto"                        {printf("KEYWORD_GOTO       %s\n", yytext);}
+"if"                          {printf("KEYWORD_IF         %s\n", yytext);}
+"in"                          {printf("KEYWORD_IN         %s\n", yytext);}
+"local"                       {printf("KEYWORD_LOCAL      %s\n", yytext);}
+"nil"                         {printf("KEYWORD_NIL        %s\n", yytext);}
+"not"                         {printf("KEYWORD_NOT        %s\n", yytext);}
+"or"                          {printf("KEYWORD_OR         %s\n", yytext);}
+"repeat"                      {printf("KEYWORD_REPEAT     %s\n", yytext);}
+"return"                      {printf("KEYWORD_RETURN     %s\n", yytext);}
+"then"                        {printf("KEYWORD_THEN       %s\n", yytext);}
+"true"                        {printf("KEYWORD_TRUE       %s\n", yytext);}
+"until"                       {printf("KEYWORD_UNTIL      %s\n", yytext);}
+"while"                       {printf("KEYWORD_WHILE      %s\n", yytext);}
 
-"+"        {printf("PLUS \n");}
-"-"        {printf("MINUS \n");}
-"*"        {printf("ASTERISK \n");}
-"/"        {printf("DIVIDE \n");}
-"%"        {printf("MOD \n");}
-"^"        {printf("CARET \n");}
-"#"        {printf("HASH \n");}
-"&"        {printf("AMPERSAND \n");}
-"~"        {printf("TILDE \n");}
-"|"        {printf("PIPE \n");}
-"<<"       {printf("LEFT_SHIFT \n");}
-">>"       {printf("RIGHT_SHIFT \n");}
-"//"       {printf("FLOOR_DIVISION \n");}
-"=="       {printf("EQUAL_TO \n");}
-"~="       {printf("NOT_EQUAL_TO \n");}
-"<="       {printf("LESS_EQUAL_TO \n");}
-">="       {printf("GREATER_EQUAL_TO \n");}
-"<"        {printf("LESS_THAN \n");}
-">"        {printf("GREATER_THAN \n");}
-"="        {printf("ASSIGNMENT \n");}
-"("        {printf("PARENTHESIS_LEFT \n");}
-")"        {printf("PARENTHESIS_RIGHT \n");}
-"{"        {printf("BRACE_LEFT \n");}
-"}"        {printf("BRACE_RIGHT \n");}
-"["        {printf("BRACKET_LEFT \n");}
-"]"        {printf("BRACKET_RIGHT \n");}
-"::"       {printf("SCOPE_RESOLUTION \n");}
-";"        {printf("SEMICOLON \n");}
-":"        {printf("COLON \n");}
-","        {printf("COMMA \n");}
-"."        {printf("DOT \n");}
-".."       {printf("CONCATENATION \n");}
-"..."      {printf("ELLIPSIS \n");}
+"+"                           {printf("PLUS               %s\n", yytext);}
+"-"                           {printf("MINUS              %s\n", yytext);}
+"*"                           {printf("ASTERISK           %s\n", yytext);}
+"/"                           {printf("DIVIDE             %s\n", yytext);}
+"%"                           {printf("MOD                %s\n", yytext);}
+"^"                           {printf("CARET              %s\n", yytext);}
+"#"                           {printf("HASH               %s\n", yytext);}
+"&"                           {printf("AMPERSAND          %s\n", yytext);}
+"~"                           {printf("TILDE              %s\n", yytext);}
+"|"                           {printf("PIPE               %s\n", yytext);}
+"<<"                          {printf("LEFT_SHIFT         %s\n", yytext);}
+">>"                          {printf("RIGHT_SHIFT        %s\n", yytext);}
+"//"                          {printf("FLOOR_DIVISION     %s\n", yytext);}
+"=="                          {printf("EQUAL_TO           %s\n", yytext);}
+"~="                          {printf("NOT_EQUAL_TO       %s\n", yytext);}
+"<="                          {printf("LESS_EQUAL_TO      %s\n", yytext);}
+">="                          {printf("GREATER_EQUAL_TO   %s\n", yytext);}
+"<"                           {printf("LESS_THAN          %s\n", yytext);}
+">"                           {printf("GREATER_THAN       %s\n", yytext);}
+"="                           {printf("ASSIGNMENT         %s\n", yytext);}
+"("                           {printf("PARENTHESIS_LEFT   %s\n", yytext);}
+")"                           {printf("PARENTHESIS_RIGHT  %s\n", yytext);}
+"{"                           {printf("BRACE_LEFT         %s\n", yytext);}
+"}"                           {printf("BRACE_RIGHT        %s\n", yytext);}
+"["                           {printf("BRACKET_LEFT       %s\n", yytext);}
+"]"                           {printf("BRACKET_RIGHT      %s\n", yytext);}
+"::"                          {printf("SCOPE_RESOLUTION   %s\n", yytext);}
+";"                           {printf("SEMICOLON          %s\n", yytext);}
+":"                           {printf("COLON              %s\n", yytext);}
+","                           {printf("COMMA              %s\n", yytext);}
+"."                           {printf("DOT                %s\n", yytext);}
+".."                          {printf("CONCATENATION      %s\n", yytext);}
+"..."                         {printf("ELLIPSIS           %s\n", yytext);}
 
 
-[a-zA-Z0-9]*	{printf("%s -> Identifier\n", yytext);}
+[a-zA-Z_][a-zA-Z0-9_]*	      {printf("IDENTIFIER         %s\n", yytext);}
 \n|" "|\t|\r|\f|\v {}
 %%
 
