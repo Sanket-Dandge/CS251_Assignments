@@ -1,6 +1,7 @@
 %{
   #include "y.tab.h" 
   extern int yylval; 
+  int linenr = 0;
 %}
 
 STRING (\"([^"\n]|\\\"|\\\n)*\")|(\'([^'\n]|\\\'|\\\n)*\')
@@ -87,8 +88,10 @@ HEX_FLOAT 0(x|X)(({HEX}*\.{HEX}+|{HEX}+\.{HEX}*){HEX_EXP}?|{HEX}+{HEX_EXP})
                                 return IDENTIFIER;
                               }
 
-\n|" "|\t|\r|\f|\v            return 0;
-.                             {printf("Invalid token      `%s`\n", yytext);}
+[ \t]									{ /* spacing */}
+[\n]									{ linenr++;}
+<<EOF>>                 				{printf("end %s \n", ""); return EXIT; }
+. {printf("other chars%s \n", yytext); }
 %%
 
 int yywrap(void){return 1;}

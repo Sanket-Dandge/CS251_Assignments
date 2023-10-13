@@ -2,9 +2,10 @@
    /* Definition section */
   #include<stdio.h>  
   int flag=0;
+  #define YYDEBUG 1
 %}
 
-%start START 
+%start start 
 %token NUMBER 
 %token COMMENT_LONG       
 %token COMMENT_SHORT      
@@ -73,89 +74,107 @@
 
 %token IDENTIFIER         
 
+%token EXIT 0 "end of file"
+
+
 /* Rule Section */
 %% 
   
-START: STMTS{ 
-  
+start: stmts{ 
          printf("\nResult=\n"); 
-  
          return 0; 
-          } 
- STMTS: /*empty*/ {printf("\nSTMTS");}
- |STMT STMTS      {printf("\nSTMTS");}
- 
- STMT: FUNCTION_BLOCK     {printf("\nSTMT");} 
- |LOOP_WHILE              {printf("\nSTMT");}
- |LOOP_FOR                {printf("\nSTMT");}
- |LOOP_REPEAT_UNTIL       {printf("\nSTMT");}
- |IF_ELSE_BLOCK           {printf("\nSTMT");}
- |L_VALUE ASSIGNMENT EXPR {printf("\nSTMT");}
- |KEYWORD_RETURN EXPR     {printf("\nSTMT");}
- |SEMICOLON
- | 
+        } 
+  ;
 
- L_VALUE: IDENTIFIER {COMMA IDENTIFIER}
+ stmts: /*empty*/ {printf("\nstmts");}
+ |stmt stmts      {printf("\nstmts");}
+ ;
+ 
+ stmt: function_block     {printf("\nstmt");} 
+ |loop_while              {printf("\nstmt");}
+ |loop_for                {printf("\nstmt");}
+ |loop_repeat_until       {printf("\nstmt");}
+ |if_else_block           {printf("\nstmt");}
+ |l_value ASSIGNMENT expr {printf("\nstmt");}
+ |KEYWORD_RETURN expr     {printf("\nstmt");}
+ |SEMICOLON
+ ;
+
+ l_value: IDENTIFIER COMMA l_value
+ | IDENTIFIER
+ ;
 
  // Loops
- LOOP_WHILE: KEYWORD_WHILE EXPR KEYWORD_DO STMTS KEYWORD_END {printf("\nLOOP_WHILE");}
+ loop_while: KEYWORD_WHILE expr KEYWORD_DO stmts KEYWORD_END {printf("\nloop_while");}
+ ;
  
- LOOP_FOR: LOOP_FOR_GENERIC {printf("\nLOOP_FOR");}
- |LOOP_FOR_NUMERIC {printf("\nLOOP_FOR");}
+ loop_for: loop_for_generic {printf("\nloop_for");}
+ |loop_for_numeric {printf("\nloop_for");}
+ ;
 
- LOOP_FOR_GENERIC: KEYWORD_FOR IDENTIFIER KEYWORD_IN EXPR KEYWORD_DO STMTS KEYWORD_END {printf("\nLOOP_FOR_GENERIC");}
+ loop_for_generic: KEYWORD_FOR IDENTIFIER KEYWORD_IN expr KEYWORD_DO stmts KEYWORD_END {printf("\nloop_for_GENERIC");}
+ ;
 
- LOOP_FOR_NUMERIC: KEYWORD_FOR IDENTIFIER ASSIGNMENT EXPR_INC KEYWORD_DO STMTS KEYWORD_END {printf("\nLOOP_FOR_NUMERIC");}
+ loop_for_numeric: KEYWORD_FOR IDENTIFIER ASSIGNMENT expr_inc KEYWORD_DO stmts KEYWORD_END {printf("\nloop_for_NUMERIC");}
+ ;
 
- EXPR_INC: IDENTIFIER COMMA IDENTIFIER {printf("\nEXPR_INC");}
+ expr_inc: IDENTIFIER COMMA IDENTIFIER {printf("\nEXPR_INC");}
  | IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER {printf("\nEXPR_INC");}
+ ;
 
- LOOP_REPEAT_UNTIL: KEYWORD_REPEAT STMTS KEYWORD_UNTIL EXPR {printf("\nLOOP_REPEAT_UNTIL");}
+ loop_repeat_until: KEYWORD_REPEAT stmts KEYWORD_UNTIL expr {printf("\nLOOP_REPEAT_UNTIL");}
+ ;
 
  // If else block
- IF_ELSE_BLOCK: KEYWORD_IF EXPR KEYWORD_THEN STMTS ELSE_IF_BLOCK {printf("\nIF_ELSE_BLOCK");}
+ if_else_block: KEYWORD_IF expr KEYWORD_THEN stmts else_if_block {printf("\nIF_ELSE_BLOCK");}
+ ;
 
- ELSE_IF_BLOCK: KEYWORD_END {printf("\nELSE_IF_BLOCK");}
- |KEYWORD_ELSEIF EXPR KEYWORD_THEN STMTS ELSE_IF_BLOCK {printf("\nELSE_IF_BLOCK");}
- |KEYWORD_ELSE STMTS KEYWORD_END {printf("\nELSE_IF_BLOCK");}
+ else_if_block: KEYWORD_END {printf("\nelse_if_block");}
+ |KEYWORD_ELSEIF expr KEYWORD_THEN stmts else_if_block {printf("\nelse_if_block");}
+ |KEYWORD_ELSE stmts KEYWORD_END {printf("\nelse_if_block");}
+ ;
 
  // Functions
- FUNCTION_BLOCK: KEYWORD_FUNCTION IDENTIFIER PARENTHESIS_LEFT ARGS PARENTHESIS_RIGHT STMTS KEYWORD_END {printf("\nFUNCTION_BLOCK");}
+ function_block: KEYWORD_FUNCTION IDENTIFIER PARENTHESIS_LEFT l_value PARENTHESIS_RIGHT stmts KEYWORD_END {printf("\nFUNCTION_BLOCK");}
+ ;
 
- CONST_FUNCTION: KEYWORD_FUNCTION PARENTHESIS_LEFT ARGS PARENTHESIS_RIGHT STMTS KEYWORD_END {printf("\nCONST_FUNCTION");}
+ const_function: KEYWORD_FUNCTION PARENTHESIS_LEFT l_value PARENTHESIS_RIGHT stmts KEYWORD_END {printf("\nconst_function");}
+ ;
 
- ARGS: IDENTIFIER {COMMA IDENTIFIER} {printf("\nARGS");}
-
- PARAMS: {printf("\nPARAMS");}
- |EXPR COMMA PARAMS {printf("\nPARAMS");}
- |EXPR {printf("\nPARAMS");}
- |TABLE_CONSTRUCTOR {printf("\nPARAMS");}
+ params: {printf("\nPARAMS");}
+ |expr COMMA params {printf("\nPARAMS");}
+ |expr {printf("\nPARAMS");}
+ |table_constructor {printf("\nPARAMS");}
  |CONST_STRING {printf("\nPARAMS");}
+ ;
 
  // Constants
- CONSTANT: CONST_STRING {printf("\nCONSTANT");}
+ constant: CONST_STRING {printf("\nCONSTANT");}
  |CONST_FLOAT {printf("\nCONSTANT");}
  |CONST_INTEGER {printf("\nCONSTANT");}
- |CONST_FUNCTION {printf("\nCONSTANT");}
+ |const_function {printf("\nCONSTANT");}
  |KEYWORD_NIL {printf("\nCONSTANT");}
  |KEYWORD_FALSE {printf("\nCONSTANT");}
  |KEYWORD_TRUE {printf("\nCONSTANT");}
+ ;
 
- //TABLE_CONSTRUCTOR
- TABLE_CONSTRUCTOR: BRACE_LEFT FIELDS BRACE_RIGHT {printf("\nTABLE_CONSTRUCTOR");}
- FIELDS: EXPR {printf("\nFIELDS");}
- | BRACKET_LEFT EXPR BRACE_RIGHT ASSIGNMENT EXPR {printf("\nFIELDS");}
- | IDENTIFIER ASSIGNMENT EXPR {printf("\nFIELDS");}
+ //table_constructor
+ table_constructor: BRACE_LEFT FIELDS BRACE_RIGHT {printf("\nTABLE_CONSTRUCTOR");}
+ FIELDS: expr {printf("\nFIELDS");}
+ | BRACKET_LEFT expr BRACE_RIGHT ASSIGNMENT expr {printf("\nFIELDS");}
+ | IDENTIFIER ASSIGNMENT expr {printf("\nFIELDS");}
+ ;
 
- EXPR: EXPR BIN_OPERATOR EXPR {printf("\nEXPR");}
- |UNARY_OPERATOR EXPR {printf("\nEXPR");}
- |CONSTANT  {printf("\nEXPR");}
+ expr: expr bin_operator expr {printf("\nEXPR");}
+ |unary_operator expr {printf("\nEXPR");}
+ |constant  {printf("\nEXPR");}
  |IDENTIFIER {printf("\nEXPR");}
- |PARENTHESIS_LEFT EXPR PARENTHESIS_RIGHT {printf("\nEXPR");}
- |EXPR PARENTHESIS_LEFT PARAMS PARENTHESIS_RIGHT {printf("\nEXPR");}
+ |PARENTHESIS_LEFT expr PARENTHESIS_RIGHT {printf("\nEXPR");}
+ |expr PARENTHESIS_LEFT params PARENTHESIS_RIGHT {printf("\nEXPR");}
+ ;
 
- EXPRS: EXPR {COMMA EXPR}
- BIN_OPERATOR:
+ //exprs: expr {COMMA expr}
+ bin_operator:
  // Arithmetic Operators
  PLUS                {printf("\nBIN_OPERATOR");}
  |MINUS               {printf("\nBIN_OPERATOR");}
@@ -174,6 +193,7 @@ START: STMTS{
  //Logical Operators
  |KEYWORD_AND {printf("\nBIN_OPERATOR");}
  |KEYWORD_OR {printf("\nBIN_OPERATOR");}
+ ;
 
  |CONCATENATION       {printf("\nBIN_OPERATOR");}
 
@@ -183,16 +203,11 @@ START: STMTS{
  |LEFT_SHIFT          {printf("\nBIN_OPERATOR");}
  |RIGHT_SHIFT         {printf("\nBIN_OPERATOR");}
 
-// |SEMICOLON          
-// |COLON              
-// |COMMA              
-// |DOT                
-// |ELLIPSIS           
-
- UNARY_OPERATOR: HASH                {printf("\nUNARY_OPERATOR");}
+ unary_operator: HASH                {printf("\nUNARY_OPERATOR");}
  |MINUS {printf("\nUNARY_OPERATOR");}
  |KEYWORD_NOT {printf("\nUNARY_OPERATOR");}
  |TILDE               {printf("\nUNARY_OPERATOR");}
+ ;
 %% 
   
 //driver code 
