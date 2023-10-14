@@ -83,14 +83,14 @@ HEX_FLOAT 0(x|X)(({HEX}*\.{HEX}+|{HEX}+\.{HEX}*){HEX_EXP}?|{HEX}+{HEX_EXP})
 "..."                         return ELLIPSIS;
 
 
-[a-zA-Z_][a-zA-Z0-9_]*	      {
-                                yylval = yytext;
-                                return IDENTIFIER;
-                              }
+[a-zA-Z_][a-zA-Z0-9_]* {
+                         yylval = yytext;
+                         return IDENTIFIER;
+                       }
 
-[ \t]									{ /* spacing */}
-[\n]									{ linenr++;}
-<<EOF>>                 				{printf("end %s \n", ""); return EXIT; }
+[ \t]                  { /* spacing */}
+[\n]                   { linenr++;}
+<<EOF>>                {printf("end %s \n", ""); return EXIT; }
 . {printf("other chars%s \n", yytext); }
 %%
 
