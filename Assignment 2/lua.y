@@ -53,6 +53,7 @@ stmt: l_value ASSIGNMENT exprs              { printf("\nstmt: assignment");}
        |if_else_block                       { printf("\nstmt: if_else");}
        |function_block                      { printf("\nstmt: function");}
        |KEYWORD_RETURN expr                 { printf("\nstmt: return");}
+       |KEYWORD_RETURN                      { printf("\nstmt: return empty");}
        |call_function                       { printf("\nstmt: function call");}
        |KEYWORD_LOCAL ids                   { printf("\nstmt: local");}
        |KEYWORD_LOCAL ids ASSIGNMENT exprs  { printf("\nstmt: local");}
