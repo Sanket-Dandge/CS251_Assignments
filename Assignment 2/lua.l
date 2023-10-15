@@ -1,7 +1,7 @@
 %{
   #include "y.tab.h" 
-  extern int yylval; 
-  int linenr = 0;
+  //extern char * yylval; 
+  int linenr = 1;
 %}
 
 STRING (\"([^"\n]|\\\"|\\\n)*\")|(\'([^'\n]|\\\'|\\\n)*\')
@@ -19,72 +19,72 @@ HEX_FLOAT 0(x|X)(({HEX}*\.{HEX}+|{HEX}+\.{HEX}*){HEX_EXP}?|{HEX}+{HEX_EXP})
 --{LONG_BRACKETS}             {/* Don't do anything on comments */};
 --.*                          {/* Don't do anything on comments */};
 
-{STRING}                      {yylval = yytext; return CONST_STRING;}
-{LONG_BRACKETS}               {yylval = yytext; return CONST_STRING;}
+{STRING}                      {yylval.strValue = strdup(yytext); return CONST_STRING;}
+{LONG_BRACKETS}               {yylval.strValue = strdup(yytext); return CONST_STRING;}
 
-{DEC_FLOAT}|{HEX_FLOAT}       {yylval = yytext; return CONST_FLOAT;}
-{DEC}+|0(x|X){HEX}+           {yylval = yytext; return CONST_INTEGER;}
+{DEC_FLOAT}|{HEX_FLOAT}       {yylval.strValue = strdup(yytext); return CONST_FLOAT;}
+{DEC}+|0(x|X){HEX}+           {yylval.strValue = strdup(yytext); return CONST_INTEGER;}
 
-"and"                         return KEYWORD_AND;
-"break"                       return KEYWORD_BREAK;
-"do"                          return KEYWORD_DO;
-"else"                        return KEYWORD_ELSE;
-"elseif"                      return KEYWORD_ELSEIF;
-"end"                         return KEYWORD_END;
-"false"                       return KEYWORD_FALSE;
-"for"                         return KEYWORD_FOR;
-"function"                    return KEYWORD_FUNCTION;
-"goto"                        return KEYWORD_GOTO;
-"if"                          return KEYWORD_IF;
-"in"                          return KEYWORD_IN;
-"local"                       return KEYWORD_LOCAL;
-"nil"                         return KEYWORD_NIL;
-"not"                         return KEYWORD_NOT;
-"or"                          return KEYWORD_OR;
-"repeat"                      return KEYWORD_REPEAT;
-"return"                      return KEYWORD_RETURN;
-"then"                        return KEYWORD_THEN;
-"true"                        return KEYWORD_TRUE;
-"until"                       return KEYWORD_UNTIL;
-"while"                       return KEYWORD_WHILE;
+"and"                         {yylval.strValue = strdup(yytext); return KEYWORD_AND;}
+"break"                       {yylval.strValue = strdup(yytext); return KEYWORD_BREAK;}
+"do"                          {yylval.strValue = strdup(yytext); return KEYWORD_DO;}
+"else"                        {yylval.strValue = strdup(yytext); return KEYWORD_ELSE;}
+"elseif"                      {yylval.strValue = strdup(yytext); return KEYWORD_ELSEIF;}
+"end"                         {yylval.strValue = strdup(yytext); return KEYWORD_END;}
+"false"                       {yylval.strValue = strdup(yytext); return KEYWORD_FALSE;}
+"for"                         {yylval.strValue = strdup(yytext); return KEYWORD_FOR;}
+"function"                    {yylval.strValue = strdup(yytext); return KEYWORD_FUNCTION;}
+"goto"                        {yylval.strValue = strdup(yytext); return KEYWORD_GOTO;}
+"if"                          {yylval.strValue = strdup(yytext); return KEYWORD_IF;}
+"in"                          {yylval.strValue = strdup(yytext); return KEYWORD_IN;}
+"local"                       {yylval.strValue = strdup(yytext); return KEYWORD_LOCAL;}
+"nil"                         {yylval.strValue = strdup(yytext); return KEYWORD_NIL;}
+"not"                         {yylval.strValue = strdup(yytext); return KEYWORD_NOT;}
+"or"                          {yylval.strValue = strdup(yytext); return KEYWORD_OR;}
+"repeat"                      {yylval.strValue = strdup(yytext); return KEYWORD_REPEAT;}
+"return"                      {yylval.strValue = strdup(yytext); return KEYWORD_RETURN;}
+"then"                        {yylval.strValue = strdup(yytext); return KEYWORD_THEN;}
+"true"                        {yylval.strValue = strdup(yytext); return KEYWORD_TRUE;}
+"until"                       {yylval.strValue = strdup(yytext); return KEYWORD_UNTIL;}
+"while"                       {yylval.strValue = strdup(yytext); return KEYWORD_WHILE;}
 
-"+"                           return PLUS;
-"-"                           return MINUS;
-"*"                           return ASTERISK;
-"/"                           return DIVIDE;
-"%"                           return MOD;
-"^"                           return CARET;
-"#"                           return HASH;
-"&"                           return AMPERSAND;
-"~"                           return TILDE;
-"|"                           return PIPE;
-"<<"                          return LEFT_SHIFT;
-">>"                          return RIGHT_SHIFT;
-"//"                          return FLOOR_DIVISION;
-"=="                          return EQUAL_TO;
-"~="                          return NOT_EQUAL_TO;
-"<="                          return LESS_EQUAL_TO;
-">="                          return GREATER_EQUAL_TO;
-"<"                           return LESS_THAN;
-">"                           return GREATER_THAN;
-"="                           return ASSIGNMENT;
-"("                           return PARENTHESIS_LEFT;
-")"                           return PARENTHESIS_RIGHT;
-"{"                           return BRACE_LEFT;
-"}"                           return BRACE_RIGHT;
-"["                           return BRACKET_LEFT;
-"]"                           return BRACKET_RIGHT;
-"::"                          return SCOPE_RESOLUTION;
-";"                           return SEMICOLON;
-":"                           return COLON;
-","                           return COMMA;
-"."                           return DOT;
-".."                          return CONCATENATION;
-"..."                         return ELLIPSIS;
+"+"                           {yylval.strValue = strdup(yytext); return PLUS;}
+"-"                           {yylval.strValue = strdup(yytext); return MINUS;}
+"*"                           {yylval.strValue = strdup(yytext); return ASTERISK;}
+"/"                           {yylval.strValue = strdup(yytext); return DIVIDE;}
+"%"                           {yylval.strValue = strdup(yytext); return MOD;}
+"^"                           {yylval.strValue = strdup(yytext); return CARET;}
+"#"                           {yylval.strValue = strdup(yytext); return HASH;}
+"&"                           {yylval.strValue = strdup(yytext); return AMPERSAND;}
+"~"                           {yylval.strValue = strdup(yytext); return TILDE;}
+"|"                           {yylval.strValue = strdup(yytext); return PIPE;}
+"<<"                          {yylval.strValue = strdup(yytext); return LEFT_SHIFT;}
+">>"                          {yylval.strValue = strdup(yytext); return RIGHT_SHIFT;}
+"//"                          {yylval.strValue = strdup(yytext); return FLOOR_DIVISION;}
+"=="                          {yylval.strValue = strdup(yytext); return EQUAL_TO;}
+"~="                          {yylval.strValue = strdup(yytext); return NOT_EQUAL_TO;}
+"<="                          {yylval.strValue = strdup(yytext); return LESS_EQUAL_TO;}
+">="                          {yylval.strValue = strdup(yytext); return GREATER_EQUAL_TO;}
+"<"                           {yylval.strValue = strdup(yytext); return LESS_THAN;}
+">"                           {yylval.strValue = strdup(yytext); return GREATER_THAN;}
+"="                           {yylval.strValue = strdup(yytext); return ASSIGNMENT;}
+"("                           {yylval.strValue = strdup(yytext); return PARENTHESIS_LEFT;}
+")"                           {yylval.strValue = strdup(yytext); return PARENTHESIS_RIGHT;}
+"{"                           {yylval.strValue = strdup(yytext); return BRACE_LEFT;}
+"}"                           {yylval.strValue = strdup(yytext); return BRACE_RIGHT;}
+"["                           {yylval.strValue = strdup(yytext); return BRACKET_LEFT;}
+"]"                           {yylval.strValue = strdup(yytext); return BRACKET_RIGHT;}
+"::"                          {yylval.strValue = strdup(yytext); return SCOPE_RESOLUTION;}
+";"                           {yylval.strValue = strdup(yytext); return SEMICOLON;}
+":"                           {yylval.strValue = strdup(yytext); return COLON;}
+","                           {yylval.strValue = strdup(yytext); return COMMA;}
+"."                           {yylval.strValue = strdup(yytext); return DOT;}
+".."                          {yylval.strValue = strdup(yytext); return CONCATENATION;}
+"..."                         {yylval.strValue = strdup(yytext); return ELLIPSIS;}
 
 
 [a-zA-Z_][a-zA-Z0-9_]* {
-                         yylval = yytext;
+                         yylval.strValue = strdup(yytext);
                          return IDENTIFIER;
                        }
 

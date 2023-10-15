@@ -1,28 +1,36 @@
 %{
    /* Definition section */
   #include<stdio.h>
+  #include<string.h>
   int flag=0;
   #define YYDEBUG 1
+  extern int linenr;
+  #define YYSTYPE char * 
 %}
 
+%union {
+	
+	char *strValue;
+}
+
 %start start
-%token NUMBER
+%token <strValue> NUMBER
 
-%token CONST_STRING
+%token <strValue> CONST_STRING
 
-%token CONST_FLOAT
-%token CONST_INTEGER
+%token <strValue> CONST_FLOAT
+%token <strValue> CONST_INTEGER
 
-%token KEYWORD_AND KEYWORD_BREAK KEYWORD_DO KEYWORD_ELSE KEYWORD_ELSEIF KEYWORD_END KEYWORD_FALSE KEYWORD_FOR KEYWORD_FUNCTION
-%token KEYWORD_GOTO KEYWORD_IF KEYWORD_IN KEYWORD_LOCAL KEYWORD_NIL KEYWORD_NOT KEYWORD_OR KEYWORD_REPEAT KEYWORD_RETURN
-%token KEYWORD_THEN KEYWORD_TRUE KEYWORD_UNTIL KEYWORD_WHILE
+%token <strValue> KEYWORD_AND KEYWORD_BREAK KEYWORD_DO KEYWORD_ELSE KEYWORD_ELSEIF KEYWORD_END KEYWORD_FALSE KEYWORD_FOR KEYWORD_FUNCTION
+%token <strValue> KEYWORD_GOTO KEYWORD_IF KEYWORD_IN KEYWORD_LOCAL KEYWORD_NIL KEYWORD_NOT KEYWORD_OR KEYWORD_REPEAT KEYWORD_RETURN
+%token <strValue> KEYWORD_THEN KEYWORD_TRUE KEYWORD_UNTIL KEYWORD_WHILE
 
-%token PLUS MINUS ASTERISK DIVIDE MOD CARET HASH AMPERSAND TILDE PIPE LEFT_SHIFT RIGHT_SHIFT FLOOR_DIVISION
-%token EQUAL_TO NOT_EQUAL_TO LESS_EQUAL_TO GREATER_EQUAL_TO LESS_THAN GREATER_THAN ASSIGNMENT
-%token PARENTHESIS_LEFT PARENTHESIS_RIGHT BRACE_LEFT BRACE_RIGHT BRACKET_LEFT BRACKET_RIGHT SCOPE_RESOLUTION
-%token SEMICOLON COLON COMMA DOT CONCATENATION ELLIPSIS
+%token <strValue> PLUS MINUS ASTERISK DIVIDE MOD CARET HASH AMPERSAND TILDE PIPE LEFT_SHIFT RIGHT_SHIFT FLOOR_DIVISION
+%token <strValue> EQUAL_TO NOT_EQUAL_TO LESS_EQUAL_TO GREATER_EQUAL_TO LESS_THAN GREATER_THAN ASSIGNMENT
+%token <strValue> PARENTHESIS_LEFT PARENTHESIS_RIGHT BRACE_LEFT BRACE_RIGHT BRACKET_LEFT BRACKET_RIGHT SCOPE_RESOLUTION
+%token <strValue> SEMICOLON COLON COMMA DOT CONCATENATION ELLIPSIS
 
-%token IDENTIFIER
+%token <strValue> IDENTIFIER
 
 %token EXIT 0 "end of file"
 
@@ -37,16 +45,24 @@ stmts: /*empty*/   { printf("\nstmts");}
        |stmt stmts { printf("\nstmts");}
        ;
 
-stmt: l_value ASSIGNMENT exprs { printf("\nstmt: assignment");}
-       |loop_while              { printf("\nstmt: while");}
-       |loop_for                { printf("\nstmt: for");}
-       |loop_repeat_until       { printf("\nstmt: repeat");}
-       |if_else_block           { printf("\nstmt: if_else");}
-       |function_block          { printf("\nstmt: function");}
-       |KEYWORD_RETURN expr     { printf("\nstmt: return");}
-       |call_function           { printf("\nstmt: function call");}
-       |SEMICOLON               { printf("\nstmt: semicolon");}
+stmt: l_value ASSIGNMENT exprs              { printf("\nstmt: assignment");}
+       |do_block                            { printf("\nstmt: do");}
+       |loop_while                          { printf("\nstmt: while");}
+       |loop_for                            { printf("\nstmt: for");}
+       |loop_repeat_until                   { printf("\nstmt: repeat");}
+       |if_else_block                       { printf("\nstmt: if_else");}
+       |function_block                      { printf("\nstmt: function");}
+       |KEYWORD_RETURN expr                 { printf("\nstmt: return");}
+       |call_function                       { printf("\nstmt: function call");}
+       |KEYWORD_LOCAL ids                   { printf("\nstmt: local");}
+       |KEYWORD_LOCAL ids ASSIGNMENT exprs  { printf("\nstmt: local");}
+       |KEYWORD_LOCAL function_local        { printf("\nstmt: function local");}
+       |SEMICOLON                           { printf("\nstmt: semicolon");}
        ;
+
+ids: IDENTIFIER COMMA ids { printf("\nl_value: multiple");}
+   | IDENTIFIER           { printf("\nl_value: single");}
+   ;
 
 l_value: var COMMA l_value { printf("\nl_value: multiple");}
        | var               { printf("\nl_value: single");}
@@ -64,14 +80,14 @@ loop_for: loop_for_generic { printf("\nloop_for");}
        |loop_for_numeric   { printf("\nloop_for");}
        ;
 
-loop_for_generic: KEYWORD_FOR IDENTIFIER KEYWORD_IN expr KEYWORD_DO stmts KEYWORD_END { printf("\nloop_for_GENERIC");}
+loop_for_generic: KEYWORD_FOR ids KEYWORD_IN exprs KEYWORD_DO stmts KEYWORD_END { printf("\nloop_for_GENERIC");}
        ;
 
 loop_for_numeric: KEYWORD_FOR IDENTIFIER ASSIGNMENT expr_inc KEYWORD_DO stmts KEYWORD_END { printf("\nloop_for_NUMERIC");}
        ;
 
-expr_inc: IDENTIFIER COMMA IDENTIFIER                 { printf("\nEXPR_INC: increment = 1");}
-       | IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER { printf("\nEXPR_INC: set increment");}
+expr_inc: expr COMMA expr           { printf("\nEXPR_INC: increment = 1");}
+       | expr COMMA expr COMMA expr { printf("\nEXPR_INC: set increment");}
        ;
 
 loop_repeat_until: KEYWORD_REPEAT stmts KEYWORD_UNTIL expr { printf("\nLOOP_REPEAT_UNTIL");}
@@ -86,8 +102,14 @@ else_if_block: KEYWORD_END                                   { printf("\nelse_if
        |KEYWORD_ELSE stmts KEYWORD_END                       { printf("\nelse_if_block: else");}
        ;
 
+// Do block
+do_block: KEYWORD_DO stmts KEYWORD_END
+
 // Functions
 function_block: KEYWORD_FUNCTION function_name PARENTHESIS_LEFT params PARENTHESIS_RIGHT stmts KEYWORD_END { printf("\nFUNCTION_BLOCK");}
+       ;
+
+function_local: KEYWORD_FUNCTION IDENTIFIER PARENTHESIS_LEFT params PARENTHESIS_RIGHT stmts KEYWORD_END { printf("\nFUNCTION_BLOCK");}
        ;
 
 function_name: IDENTIFIER dot_name
@@ -113,6 +135,7 @@ call_function: exprP args           { printf("\nFunction");}
        ;
 
 args: PARENTHESIS_LEFT exprs PARENTHESIS_RIGHT
+       |PARENTHESIS_LEFT PARENTHESIS_RIGHT
        |table_constructor
        |CONST_STRING
        ;
@@ -212,6 +235,6 @@ void main()
 
 void yyerror()
 {
-   printf("\nInvalid Syntax\n");
+   printf("\nUnexpected token `%s' at line %d\n", yylval, linenr);
    flag=1;
 }
