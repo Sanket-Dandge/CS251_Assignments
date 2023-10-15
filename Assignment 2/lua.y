@@ -37,19 +37,23 @@ stmts: /*empty*/   { printf("\nstmts");}
        |stmt stmts { printf("\nstmts");}
        ;
 
-stmt: function_block            { printf("\nstmt: function");}
+stmt: l_value ASSIGNMENT exprs { printf("\nstmt: assignment");}
        |loop_while              { printf("\nstmt: while");}
        |loop_for                { printf("\nstmt: for");}
        |loop_repeat_until       { printf("\nstmt: repeat");}
        |if_else_block           { printf("\nstmt: if_else");}
-       |l_value ASSIGNMENT expr { printf("\nstmt: assignment");}
+       |function_block          { printf("\nstmt: function");}
        |KEYWORD_RETURN expr     { printf("\nstmt: return");}
        |call_function           { printf("\nstmt: function call");}
        |SEMICOLON               { printf("\nstmt: semicolon");}
        ;
 
-l_value: IDENTIFIER COMMA l_value { printf("\nl_value: multiple");}
-       | IDENTIFIER               { printf("\nl_value: single");}
+l_value: var COMMA l_value { printf("\nl_value: multiple");}
+       | var               { printf("\nl_value: single");}
+       ;
+
+exprs: exprs COMMA expr { printf("\nl_value: multiple");}
+       |expr               { printf("\nl_value: single");}
        ;
 
 // Loops
@@ -83,19 +87,34 @@ else_if_block: KEYWORD_END                                   { printf("\nelse_if
        ;
 
 // Functions
-function_block: KEYWORD_FUNCTION IDENTIFIER PARENTHESIS_LEFT l_value PARENTHESIS_RIGHT stmts KEYWORD_END { printf("\nFUNCTION_BLOCK");}
+function_block: KEYWORD_FUNCTION function_name PARENTHESIS_LEFT params PARENTHESIS_RIGHT stmts KEYWORD_END { printf("\nFUNCTION_BLOCK");}
        ;
 
-const_function: KEYWORD_FUNCTION PARENTHESIS_LEFT l_value PARENTHESIS_RIGHT stmts KEYWORD_END { printf("\nconst_function");}
+function_name: IDENTIFIER dot_name
+       |IDENTIFIER dot_name COLON IDENTIFIER
        ;
 
-call_function: expr PARENTHESIS_LEFT params PARENTHESIS_RIGHT { printf("\nFunction");}
+dot_name: DOT IDENTIFIER dot_name
+       |/*empty*/{}
+       ;
 
-params:                   { printf("\nPARAMS: empty");}
-       |expr COMMA params { printf("\nPARAMS: multiple");}
-       |expr              { printf("\nPARAMS: single");}
-       |table_constructor { printf("\nPARAMS: table");}
-       |CONST_STRING      { printf("\nPARAMS: string");}
+const_function: KEYWORD_FUNCTION PARENTHESIS_LEFT params PARENTHESIS_RIGHT stmts KEYWORD_END { printf("\nconst_function");}
+       ;
+
+params:                         { printf("\nPARAMS: empty");}
+       |IDENTIFIER COMMA params { printf("\nPARAMS: multiple");}
+       |IDENTIFIER              { printf("\nPARAMS: single");}
+       |ELLIPSIS                { printf("\nPARAMS: ellipsis");}
+       ;
+
+
+call_function: exprP args           { printf("\nFunction");}
+       |exprP COLON IDENTIFIER args { printf("\nFunction");}
+       ;
+
+args: PARENTHESIS_LEFT exprs PARENTHESIS_RIGHT
+       |table_constructor
+       |CONST_STRING
        ;
 
 // Constants
@@ -106,26 +125,47 @@ constant: CONST_STRING { printf("\nCONSTANT: string");}
        |KEYWORD_NIL    { printf("\nCONSTANT: nil");}
        |KEYWORD_FALSE  { printf("\nCONSTANT: false");}
        |KEYWORD_TRUE   { printf("\nCONSTANT: true");}
+       |table_constructor { printf("\nCONSTANT: table");}
        ;
 
 //table_constructor
-table_constructor: BRACE_LEFT FIELDS BRACE_RIGHT { printf("\nTABLE_CONSTRUCTOR");}
+table_constructor: BRACE_LEFT field_list BRACE_RIGHT { printf("\nTABLE_CONSTRUCTOR");}
+       |BRACE_LEFT BRACE_RIGHT { printf("\nTABLE_CONSTRUCTOR");}
        ;
 
-FIELDS: expr                                           { printf("\nFIELDS");}
+field_list: field sep_fields
+       |field sep_fields fieldsep
+       ;
+
+sep_fields: fieldsep field sep_fields
+       |{}
+       ;
+
+field:  expr                                           { printf("\nFIELDS");}
        | BRACKET_LEFT expr BRACE_RIGHT ASSIGNMENT expr { printf("\nFIELDS");}
        | IDENTIFIER ASSIGNMENT expr                    { printf("\nFIELDS");}
        ;
 
-expr: expr bin_operator expr                    { printf("\nEXPR: bin");}
-       |unary_operator expr                     { printf("\nEXPR: unary");}
-       |constant                                { printf("\nEXPR: const");}
-       |IDENTIFIER                              { printf("\nEXPR: id");}
-       |PARENTHESIS_LEFT expr PARENTHESIS_RIGHT { printf("\nEXPR: parenthesis");}
-       |call_function                           { printf("\nEXPR: function call");}
+fieldsep: COMMA
+	| SEMICOLON
+
+//exp ::= function 
+
+var: IDENTIFIER
+       | exprP BRACKET_LEFT expr BRACKET_RIGHT
+       | exprP DOT IDENTIFIER
+
+exprP: PARENTHESIS_LEFT expr PARENTHESIS_RIGHT { printf("\nEXPR_P: parenthesis");}
+       |call_function                          { printf("\nEXPR_P: function call");}
+       |var                                    { printf("\nEXPR_P: var");}
+
+expr:  constant                              { printf("\nEXPR: const");}
+       |ELLIPSIS                             { printf("\nEXPR: elipsis");}
+       |exprP                                { printf("\nEXPR: prefix");}
+       |expr bin_operator expr               { printf("\nEXPR: bin");}
+       |unary_operator expr                  { printf("\nEXPR: unary");}
        ;
 
-//exprs: expr {COMMA expr}
 bin_operator:
        // Arithmetic Operators
        PLUS                 {printf("\nBIN_OPERATOR");}

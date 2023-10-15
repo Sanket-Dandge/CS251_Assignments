@@ -16,8 +16,8 @@ HEX_EXP ((P|p)[\+|-]?[0-9])
 HEX_FLOAT 0(x|X)(({HEX}*\.{HEX}+|{HEX}+\.{HEX}*){HEX_EXP}?|{HEX}+{HEX_EXP})
 
 %%
---{LONG_BRACKETS}             return 0;
---.*                          return 0;
+--{LONG_BRACKETS}             {/* Don't do anything on comments */};
+--.*                          {/* Don't do anything on comments */};
 
 {STRING}                      {yylval = yytext; return CONST_STRING;}
 {LONG_BRACKETS}               {yylval = yytext; return CONST_STRING;}
