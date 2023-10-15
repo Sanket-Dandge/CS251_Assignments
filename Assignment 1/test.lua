@@ -1,6 +1,6 @@
 -- Markov Chain Program in Lua
     
-    function allwords (
+    function allwords ()
       local line = io.read()    -- current line
       local pos = 1             -- current position in the line
       return function ()        -- iterator function
