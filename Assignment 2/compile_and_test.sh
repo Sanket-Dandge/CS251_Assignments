@@ -1,6 +1,10 @@
-yacc -H lua.y
-flex lua.l
-gcc lex.yy.c y.tab.c -o syntax_analyser.o
+#!/bin/bash
+
+yacc -H lua.y 2> /dev/null
+flex lua.l 2> /dev/null
+gcc lex.yy.c y.tab.c -o syntax_analyser_lua.o 2> /dev/null
 if [ "$1" == "test" ]; then
-  cat test.lua | ./syntax_analyser.o
+  for file in $(ls tests); do
+    cat tests/$file | ./syntax_analyser_lua.o
+  done
 fi
