@@ -36,7 +36,7 @@
 %token EXIT 0 "end of file"
 
 %left CARET
-%left KEYWORD_NOT HASH MINUS
+%left KEYWORD_NOT HASH
 %left ASTERISK DIVIDE MOD
 %left PLUS MINUS
 %left CONCATENATION
