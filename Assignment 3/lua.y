@@ -8,6 +8,7 @@
   extern int linenr;
   int debug = 0;
   struct _Node *root = NULL;
+  // FILE *yyout;
 
   int error_count = 0;
   int flag = 0;
@@ -42,7 +43,7 @@
 %type <node> start stmts stmt ids l_value exprs loop_while loop_for loop_for_generic loop_for_numeric expr_inc loop_repeat_until if_else_block else_if_block do_block function_block function_local function_name dot_name const_function params call_function args constant table_constructor field_list sep_fields field fieldsep var exprP expr bin_operator unary_operator
 
 %left CARET
-%left KEYWORD_NOT HASH
+%left KEYWORD_NOT HASH UMINUS
 %left ASTERISK DIVIDE MOD
 %left PLUS MINUS
 %left CONCATENATION
@@ -67,7 +68,7 @@ stmts: /*empty*/   { DPRINT("\nstmts"); $$ = NULL;}
        |stmt stmts { DPRINT("\nstmts"); $$ = makeNode(N_STMTS, 2, $1, $2);}
        ;
 
-stmt: l_value ASSIGNMENT exprs              { DPRINT("\nstmt: assignment"); $$ = makeNode(N_STMT, 3, $1, generateTerminal(ASSIGNMENT, "="), $3);}
+stmt: l_value ASSIGNMENT exprs              { DPRINT("\nstmt: assignment"); $$ = makeNode(N_ASGN, 2, $1, $3);}
        |do_block                            { DPRINT("\nstmt: do"); $$ = $1;}
        |loop_while                          { DPRINT("\nstmt: while");$$ = $1;}
        |loop_for                            { DPRINT("\nstmt: for");$$ = $1;}
@@ -88,11 +89,11 @@ ids: IDENTIFIER COMMA ids { DPRINT("\nl_value: multiple"); $$ = makeNode(N_STMT,
    | IDENTIFIER           { DPRINT("\nl_value: single"); $$ = generateTerminal(IDENTIFIER, $1);}
    ;
 
-l_value: var COMMA l_value { DPRINT("\nl_value: multiple"); $$ = makeNode(N_STMT, 3, $1, generateTerminal(COMMA, ","), $3);}
+l_value: var COMMA l_value { DPRINT("\nl_value: multiple"); $$ = makeNode(N_LVALUE, 2, $1, $3);}
        | var               { DPRINT("\nl_value: single"); $$ = $1;}
        ;
 
-exprs: exprs COMMA expr    { DPRINT("\nl_value: multiple"); $$ = makeNode(N_STMT, 3, $1, generateTerminal(COMMA, ","), $3);}
+exprs: expr COMMA exprs    { DPRINT("\nl_value: multiple"); $$ = makeNode(N_EXPRS, 2, $1, $3);}
        |expr               { DPRINT("\nl_value: single"); $$ = $1;}
        ;
 
@@ -153,7 +154,6 @@ params: /*empty*/               { DPRINT("\nPARAMS: empty"); $$ = NULL;}
        |ELLIPSIS                { DPRINT("\nPARAMS: ellipsis"); $$ = generateTerminal(ELLIPSIS, "...");}
        ;
 
-/* NOT SURE*/
 call_function: exprP args           { DPRINT("\nFunction"); $$ = NULL;}
        |exprP COLON IDENTIFIER args { DPRINT("\nFunction"); $$ = NULL;}
        ;
@@ -165,14 +165,14 @@ args: PARENTHESIS_LEFT exprs PARENTHESIS_RIGHT { DPRINT("\nARGS: exprs"); $$ = m
        ;
 
 // Constants
-constant: CONST_STRING    { DPRINT("\nCONSTANT: string"); $$ = generateTerminal(CONST_STRING, $1);}
-       |CONST_FLOAT       { DPRINT("\nCONSTANT: float"); $$ = generateTerminal(CONST_FLOAT, $1);}
-       |CONST_INTEGER     { DPRINT("\nCONSTANT: integer"); $$ = generateTerminal(CONST_INTEGER, $1);}
+constant: CONST_STRING    { DPRINT("\nCONSTANT: string"); $$ = makeNode(N_CONST, 1, generateTerminal(CONST_STRING, $1));}
+       |CONST_FLOAT       { DPRINT("\nCONSTANT: float"); $$ = makeNode(N_CONST, 1, generateTerminal(CONST_FLOAT, $1));}
+       |CONST_INTEGER     { DPRINT("\nCONSTANT: integer"); $$ = makeNode(N_CONST, 1, generateTerminal(CONST_INTEGER, $1));}
        |const_function    { DPRINT("\nCONSTANT: function"); $$ = NULL;}
-       |KEYWORD_NIL       { DPRINT("\nCONSTANT: nil"); $$ = generateTerminal(KEYWORD_NIL, $1);}
-       |KEYWORD_FALSE     { DPRINT("\nCONSTANT: false"); $$ = generateTerminal(KEYWORD_FALSE, $1);}
-       |KEYWORD_TRUE      { DPRINT("\nCONSTANT: true"); $$ = generateTerminal(KEYWORD_TRUE, $1);}
-       |table_constructor { DPRINT("\nCONSTANT: table"); $$ = $1;}
+       |KEYWORD_NIL       { DPRINT("\nCONSTANT: nil"); $$ = makeNode(N_CONST, 1, generateTerminal(KEYWORD_NIL, $1));}
+       |KEYWORD_FALSE     { DPRINT("\nCONSTANT: false"); $$ = makeNode(N_CONST, 1, generateTerminal(KEYWORD_FALSE, $1));}
+       |KEYWORD_TRUE      { DPRINT("\nCONSTANT: true"); $$ = makeNode(N_CONST, 1, generateTerminal(KEYWORD_TRUE, $1));}
+       |table_constructor { DPRINT("\nCONSTANT: table"); $$ = makeNode(N_CONST, 1, $1);}
        ;
 
 //table_constructor
@@ -190,16 +190,16 @@ sep_fields: fieldsep field sep_fields { DPRINT("\nSEP_FIELDS"); $$ = makeNode(N_
 
 /* MAYBE CHANGE NEEDED*/
 field:  expr                                           { DPRINT("\nFIELDS"); $$ = $1;}
-       | BRACKET_LEFT expr BRACE_RIGHT ASSIGNMENT expr { DPRINT("\nFIELDS"); $$ = makeNode(N_STMT, 5, generateTerminal(BRACKET_LEFT, "["), $2, generateTerminal(BRACE_RIGHT, "}"), generateTerminal(ASSIGNMENT, "="), $5);}
+       | BRACKET_LEFT expr BRACKET_RIGHT ASSIGNMENT expr { DPRINT("\nFIELDS"); $$ = makeNode(N_STMT, 5, generateTerminal(BRACKET_LEFT, "["), $2, generateTerminal(BRACKET_RIGHT, "]"), generateTerminal(ASSIGNMENT, "="), $5);}
        | IDENTIFIER ASSIGNMENT expr                    { DPRINT("\nFIELDS"); $$ = makeNode(N_STMT, 3, generateTerminal(IDENTIFIER, $1), generateTerminal(ASSIGNMENT, "="), $3);}
        ;
 
 fieldsep: COMMA { DPRINT("\nFIELDSEP: COMMA"); $$ = generateTerminal(COMMA, ",");}
     | SEMICOLON { DPRINT("\nFIELDSEP: SEMICOLON"); $$ = NULL;}
 
-var: IDENTIFIER                                { DPRINT("\nVAR: id"); $$ = generateTerminal(IDENTIFIER, $1);}
-       | exprP BRACKET_LEFT expr BRACKET_RIGHT { DPRINT("\nVAR: expr"); $$ = makeNode(N_STMT, 4, $1, generateTerminal(BRACKET_LEFT, "["), $3, generateTerminal(BRACKET_RIGHT, "]"));}
-       | exprP DOT IDENTIFIER                  { DPRINT("\nVAR: dot"); $$ = makeNode(N_STMT, 3, $1, generateTerminal(DOT, "."), generateTerminal(IDENTIFIER, $3));}
+var: IDENTIFIER                                { DPRINT("\nVAR: id"); $$ = makeNode(N_VAR, 1, generateTerminal(IDENTIFIER, $1));}
+       | exprP BRACKET_LEFT expr BRACKET_RIGHT { DPRINT("\nVAR: expr"); $$ = makeNode(N_VAR, 4, $1, generateTerminal(BRACKET_LEFT, "["), $3, generateTerminal(BRACKET_RIGHT, "]"));}
+       | exprP DOT IDENTIFIER                  { DPRINT("\nVAR: dot"); $$ = makeNode(N_VAR, 3, $1, generateTerminal(DOT, "."), generateTerminal(IDENTIFIER, $3));}
 
 exprP: PARENTHESIS_LEFT expr PARENTHESIS_RIGHT { DPRINT("\nEXPR_P: parenthesis"); $$ = makeNode(N_STMT, 3, generateTerminal(PARENTHESIS_LEFT, "("), $2, generateTerminal(PARENTHESIS_RIGHT, ")"));}
        |call_function                          { DPRINT("\nEXPR_P: function call"); $$ = NULL;}
@@ -208,8 +208,8 @@ exprP: PARENTHESIS_LEFT expr PARENTHESIS_RIGHT { DPRINT("\nEXPR_P: parenthesis")
 expr:  constant                { DPRINT("\nEXPR: const"); $$ = $1;}
        |ELLIPSIS               { DPRINT("\nEXPR: elipsis"); $$ = generateTerminal(ELLIPSIS, "...");}
        |exprP                  { DPRINT("\nEXPR: prefix"); $$ = $1;}
-       |expr bin_operator expr { DPRINT("\nEXPR: bin"); $$ = makeNode(N_STMT, 3, $1, $2, $3);}
-       |unary_operator expr    { DPRINT("\nEXPR: unary"); $$ = makeNode(N_STMT, 2, $1, $2);}
+       |expr bin_operator expr { DPRINT("\nEXPR: bin"); $$ = makeNode(N_EXPR, 3, $1, $2, $3);}
+       |unary_operator expr    { DPRINT("\nEXPR: unary"); $$ = makeNode(N_EXPR, 2, $1, $2);}
        ;
 
 bin_operator:
@@ -251,14 +251,24 @@ unary_operator: HASH {DPRINT("\nUNARY_OPERATOR: hash"); $$ = generateTerminal(HA
 int main()
 {
   printf("\nEnter Lua Program:\n");
-   yyparse();
-  if(flag==0)
-  {
+  yyparse();
+  if(flag==0) {
     printf("\nValid Syntax\n");
+    printf("\nGenerating TAC...\n");
+
+    TACList *tacList = malloc(sizeof(TACList));
+    bzero(tacList, sizeof(TACList));
+    tacList->op = TA_BEGIN;
+    genIntCode(root, tacList);
+
+    printf("TAC Code\n");
+    printf("____________________________________________________________________\n");
+    printf("Op\t\tArg1\t\tArg2\t\tResult\n");
+    printTACList(tacList->next);
+
     return(0);
   }
-  else
-  {
+  else {
     printf("\n%d syntax errors detected\n", error_count);
     return(1);
   }
