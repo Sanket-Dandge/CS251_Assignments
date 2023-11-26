@@ -93,156 +93,157 @@ l_value: var COMMA l_value { DPRINT("\nl_value: multiple"); $$ = makeNode(N_STMT
        ;
 
 exprs: exprs COMMA expr    { DPRINT("\nl_value: multiple"); $$ = makeNode(N_STMT, 3, $1, generateTerminal(COMMA, ","), $3);}
-       |expr               { DPRINT("\nl_value: single"); $$ = $1}
+       |expr               { DPRINT("\nl_value: single"); $$ = $1;}
        ;
 
 // Loops
-loop_while: KEYWORD_WHILE expr KEYWORD_DO stmts KEYWORD_END { DPRINT("\nloop_while"); $$ = makeNode(N_STMT, 5, ) }
+loop_while: KEYWORD_WHILE expr KEYWORD_DO stmts KEYWORD_END { DPRINT("\nloop_while"); $$ = makeNode(N_STMT, 5, generateTerminal(KEYWORD_WHILE, "while"), $2, generateTerminal(KEYWORD_DO, "do"), $4, generateTerminal(KEYWORD_END, "end"));}
        ;
 
-loop_for: loop_for_generic { DPRINT("\nloop_for");}
-       |loop_for_numeric   { DPRINT("\nloop_for");}
+loop_for: loop_for_generic { DPRINT("\nloop_for"); $$ = $1;}
+       |loop_for_numeric   { DPRINT("\nloop_for"); $$ = $1;}
        ;
 
-loop_for_generic: KEYWORD_FOR ids KEYWORD_IN exprs KEYWORD_DO stmts KEYWORD_END { DPRINT("\nloop_for_GENERIC");}
+loop_for_generic: KEYWORD_FOR ids KEYWORD_IN exprs KEYWORD_DO stmts KEYWORD_END { DPRINT("\nloop_for_GENERIC"); $$ = makeNode(N_STMT, 7, generateTerminal(KEYWORD_FOR, "for"), $2, generateTerminal(KEYWORD_IN, "in"), $4, generateTerminal(KEYWORD_DO, "do"), $6, generateTerminal(KEYWORD_END, "end"));}
        ;
 
-loop_for_numeric: KEYWORD_FOR IDENTIFIER ASSIGNMENT expr_inc KEYWORD_DO stmts KEYWORD_END { DPRINT("\nloop_for_NUMERIC");}
+loop_for_numeric: KEYWORD_FOR IDENTIFIER ASSIGNMENT expr_inc KEYWORD_DO stmts KEYWORD_END { DPRINT("\nloop_for_NUMERIC");; $$ = makeNode(N_STMT, 7, generateTerminal(KEYWORD_FOR, "for"), generateTerminal(IDENTIFIER, $2), generateTerminal(ASSIGNMENT, "="), $4, generateTerminal(KEYWORD_DO, "do"), $6, generateTerminal(KEYWORD_END, "end"));}
        ;
 
-expr_inc: expr COMMA expr           { DPRINT("\nEXPR_INC: increment = 1");}
-       | expr COMMA expr COMMA expr { DPRINT("\nEXPR_INC: set increment");}
+expr_inc: expr COMMA expr           { DPRINT("\nEXPR_INC: increment = 1"); $$ = makeNode(N_STMT, 3, $1, generateTerminal(COMMA, ","), $3);}
+       | expr COMMA expr COMMA expr { DPRINT("\nEXPR_INC: set increment"); $$ = makeNode(N_STMT, 5, $1, generateTerminal(COMMA, ","), $3, generateTerminal(COMMA, ";"), $5);}
        ;
 
-loop_repeat_until: KEYWORD_REPEAT stmts KEYWORD_UNTIL expr { DPRINT("\nLOOP_REPEAT_UNTIL");}
+loop_repeat_until: KEYWORD_REPEAT stmts KEYWORD_UNTIL expr { DPRINT("\nLOOP_REPEAT_UNTIL"); $$ = makeNode(N_STMT, 4, generateTerminal(KEYWORD_REPEAT, "repeat"), $2, generateTerminal(KEYWORD_UNTIL, "until"), $4);}
        ;
 
 // If else block
-if_else_block: KEYWORD_IF expr KEYWORD_THEN stmts else_if_block { DPRINT("\nIF_ELSE_BLOCK");}
+if_else_block: KEYWORD_IF expr KEYWORD_THEN stmts else_if_block { DPRINT("\nIF_ELSE_BLOCK"); $$ = makeNode(N_STMT, 5, generateTerminal(KEYWORD_IF, "if"), $2, generateTerminal(KEYWORD_THEN, "then"), $4, $5);}
        ;
 
-else_if_block: KEYWORD_END                                   { DPRINT("\nelse_if_block: end");}
-       |KEYWORD_ELSEIF expr KEYWORD_THEN stmts else_if_block { DPRINT("\nelse_if_block: else if");}
-       |KEYWORD_ELSE stmts KEYWORD_END                       { DPRINT("\nelse_if_block: else");}
+else_if_block: KEYWORD_END                                   { DPRINT("\nelse_if_block: end"); $$ = generateTerminal(KEYWORD_END, "end");}
+       |KEYWORD_ELSEIF expr KEYWORD_THEN stmts else_if_block { DPRINT("\nelse_if_block: else if"); $$ = makeNode(N_STMT, 5, generateTerminal(KEYWORD_ELSEIF, "elseif"), $2, generateTerminal(KEYWORD_THEN, "then"), $4, $5);}
+       |KEYWORD_ELSE stmts KEYWORD_END                       { DPRINT("\nelse_if_block: else"); $$ = makeNode(N_STMT, 3, generateTerminal(KEYWORD_ELSE, "else"), $2, generateTerminal(KEYWORD_END, "end"));}
        ;
 
 // Do block
-do_block: KEYWORD_DO stmts KEYWORD_END    { DPRINT("\nDO_BLOCK");}
+do_block: KEYWORD_DO stmts KEYWORD_END    { DPRINT("\nDO_BLOCK"); $$ = makeNode(N_STMT, 3, generateTerminal(KEYWORD_DO, "do"), $2, generateTerminal(KEYWORD_END, "end"));}
 
 // Functions
-function_block: KEYWORD_FUNCTION function_name PARENTHESIS_LEFT params PARENTHESIS_RIGHT stmts KEYWORD_END { DPRINT("\nFUNCTION_BLOCK");}
+function_block: KEYWORD_FUNCTION function_name PARENTHESIS_LEFT params PARENTHESIS_RIGHT stmts KEYWORD_END { DPRINT("\nFUNCTION_BLOCK"); $$ = NULL;}
        ;
 
-function_local: KEYWORD_FUNCTION IDENTIFIER PARENTHESIS_LEFT params PARENTHESIS_RIGHT stmts KEYWORD_END { DPRINT("\nFUNCTION_BLOCK");}
+function_local: KEYWORD_FUNCTION IDENTIFIER PARENTHESIS_LEFT params PARENTHESIS_RIGHT stmts KEYWORD_END { DPRINT("\nFUNCTION_BLOCK"); $$ = NULL;}
        ;
 
-function_name: IDENTIFIER dot_name           { DPRINT("\nFUNCTION_NAME: dot");}
-       |IDENTIFIER dot_name COLON IDENTIFIER { DPRINT("\nFUNCTION_BLOCK: dot colon");}
+function_name: IDENTIFIER dot_name           { DPRINT("\nFUNCTION_NAME: dot"); $$ = makeNode(N_STMT, 2, generateTerminal(IDENTIFIER, $1), $2);}
+       |IDENTIFIER dot_name COLON IDENTIFIER { DPRINT("\nFUNCTION_BLOCK: dot colon"); $$ = makeNode(N_STMT, 4, generateTerminal(IDENTIFIER, $1), $2, generateTerminal(COLON, ":"), generateTerminal(IDENTIFIER, $4));}
        ;
 
-dot_name: DOT IDENTIFIER dot_name    { DPRINT("\nDOT_NAME: dot_id");}
+dot_name: DOT IDENTIFIER dot_name    { DPRINT("\nDOT_NAME: dot_id"); $$ = makeNode(N_STMT, 3, generateTerminal(DOT, "."), generateTerminal(IDENTIFIER, $2), $3);}
        |/*empty*/                    { DPRINT("\nDOT_NAME: empty"); $$ = NULL;}
        ;
 
-const_function: KEYWORD_FUNCTION PARENTHESIS_LEFT params PARENTHESIS_RIGHT stmts KEYWORD_END { DPRINT("\nconst_function");}
+const_function: KEYWORD_FUNCTION PARENTHESIS_LEFT params PARENTHESIS_RIGHT stmts KEYWORD_END { DPRINT("\nconst_function"); $$ = NULL;}
        ;
 
 params: /*empty*/               { DPRINT("\nPARAMS: empty"); $$ = NULL;}
-       |IDENTIFIER COMMA params { DPRINT("\nPARAMS: multiple");}
-       |IDENTIFIER              { DPRINT("\nPARAMS: single");}
-       |ELLIPSIS                { DPRINT("\nPARAMS: ellipsis");}
+       |IDENTIFIER COMMA params { DPRINT("\nPARAMS: multiple"); $$ = makeNode(N_STMT, 3, generateTerminal(IDENTIFIER, $1), generateTerminal(COMMA, $2), $3);}
+       |IDENTIFIER              { DPRINT("\nPARAMS: single"); $$ = generateTerminal(IDENTIFIER, $1);}
+       |ELLIPSIS                { DPRINT("\nPARAMS: ellipsis"); $$ = generateTerminal(ELLIPSIS, "...");}
        ;
 
-
-call_function: exprP args           { DPRINT("\nFunction");}
-       |exprP COLON IDENTIFIER args { DPRINT("\nFunction");}
+/* NOT SURE*/
+call_function: exprP args           { DPRINT("\nFunction"); $$ = NULL;}
+       |exprP COLON IDENTIFIER args { DPRINT("\nFunction"); $$ = NULL;}
        ;
 
-args: PARENTHESIS_LEFT exprs PARENTHESIS_RIGHT { DPRINT("\nARGS: exprs");}
-       |PARENTHESIS_LEFT PARENTHESIS_RIGHT     { DPRINT("\nARGS: empty_exprs");}
-       |table_constructor                      { DPRINT("\nARGS: table");}
-       |CONST_STRING                           { DPRINT("\nARGS: string");}
+args: PARENTHESIS_LEFT exprs PARENTHESIS_RIGHT { DPRINT("\nARGS: exprs"); $$ = makeNode(N_STMT, 3, generateTerminal(PARENTHESIS_LEFT, "("), $2, generateTerminal(PARENTHESIS_RIGHT, ")"));}
+       |PARENTHESIS_LEFT PARENTHESIS_RIGHT     { DPRINT("\nARGS: empty_exprs"); $$ = makeNode(N_STMT, 2, generateTerminal(PARENTHESIS_LEFT, "("), generateTerminal(PARENTHESIS_RIGHT, ")"));}
+       |table_constructor                      { DPRINT("\nARGS: table"); $$ = $1;}
+       |CONST_STRING                           { DPRINT("\nARGS: string"); $$ = generateTerminal(CONST_STRING, $1);}
        ;
 
 // Constants
-constant: CONST_STRING    { DPRINT("\nCONSTANT: string");}
-       |CONST_FLOAT       { DPRINT("\nCONSTANT: float");}
-       |CONST_INTEGER     { DPRINT("\nCONSTANT: integer");}
-       |const_function    { DPRINT("\nCONSTANT: function");}
-       |KEYWORD_NIL       { DPRINT("\nCONSTANT: nil");}
-       |KEYWORD_FALSE     { DPRINT("\nCONSTANT: false");}
-       |KEYWORD_TRUE      { DPRINT("\nCONSTANT: true");}
-       |table_constructor { DPRINT("\nCONSTANT: table");}
+constant: CONST_STRING    { DPRINT("\nCONSTANT: string"); $$ = generateTerminal(CONST_STRING, $1);}
+       |CONST_FLOAT       { DPRINT("\nCONSTANT: float"); $$ = generateTerminal(CONST_FLOAT, $1);}
+       |CONST_INTEGER     { DPRINT("\nCONSTANT: integer"); $$ = generateTerminal(CONST_INTEGER, $1);}
+       |const_function    { DPRINT("\nCONSTANT: function"); $$ = NULL;}
+       |KEYWORD_NIL       { DPRINT("\nCONSTANT: nil"); $$ = generateTerminal(KEYWORD_NIL, $1);}
+       |KEYWORD_FALSE     { DPRINT("\nCONSTANT: false"); $$ = generateTerminal(KEYWORD_FALSE, $1);}
+       |KEYWORD_TRUE      { DPRINT("\nCONSTANT: true"); $$ = generateTerminal(KEYWORD_TRUE, $1);}
+       |table_constructor { DPRINT("\nCONSTANT: table"); $$ = $1;}
        ;
 
 //table_constructor
-table_constructor: BRACE_LEFT field_list BRACE_RIGHT { DPRINT("\nTABLE_CONSTRUCTOR");}
-       |BRACE_LEFT BRACE_RIGHT                       { DPRINT("\nTABLE_CONSTRUCTOR");}
+table_constructor: BRACE_LEFT field_list BRACE_RIGHT { DPRINT("\nTABLE_CONSTRUCTOR"); $$ = makeNode(N_STMT, 3, generateTerminal(BRACE_LEFT, "{"), $2, generateTerminal(BRACE_RIGHT, "}"));}
+       |BRACE_LEFT BRACE_RIGHT                       { DPRINT("\nTABLE_CONSTRUCTOR"); $$ = makeNode(N_STMT, 2, generateTerminal(BRACE_LEFT, "{"), generateTerminal(BRACE_RIGHT, "}"));}
        ;
 
-field_list: field sep_fields      { DPRINT("\nFIELD_LIST: no_fieldsep");}        
-       |field sep_fields fieldsep { DPRINT("\nFIELD_LIST: with_fieldsep");}
+field_list: field sep_fields      { DPRINT("\nFIELD_LIST: no_fieldsep"); $$ = makeNode(N_STMT, 2, $1, $2);}
+       |field sep_fields fieldsep { DPRINT("\nFIELD_LIST: with_fieldsep"); $$ = makeNode(N_STMT, 3, $1, $2, $3);}
        ;
 
-sep_fields: fieldsep field sep_fields { DPRINT("\nSEP_FIELDS");}
+sep_fields: fieldsep field sep_fields { DPRINT("\nSEP_FIELDS"); $$ = makeNode(N_STMT, 3, $1, $2, $3);}
        | /*empty*/                    { DPRINT("\nSEP_FIELDS: empty"); $$ = NULL;}
        ;
 
-field:  expr                                           { DPRINT("\nFIELDS");}
-       | BRACKET_LEFT expr BRACE_RIGHT ASSIGNMENT expr { DPRINT("\nFIELDS");}
-       | IDENTIFIER ASSIGNMENT expr                    { DPRINT("\nFIELDS");}
+/* MAYBE CHANGE NEEDED*/
+field:  expr                                           { DPRINT("\nFIELDS"); $$ = $1;}
+       | BRACKET_LEFT expr BRACE_RIGHT ASSIGNMENT expr { DPRINT("\nFIELDS"); $$ = makeNode(N_STMT, 5, generateTerminal(BRACKET_LEFT, "["), $2, generateTerminal(BRACE_RIGHT, "}"), generateTerminal(ASSIGNMENT, "="), $5);}
+       | IDENTIFIER ASSIGNMENT expr                    { DPRINT("\nFIELDS"); $$ = makeNode(N_STMT, 3, generateTerminal(IDENTIFIER, $1), generateTerminal(ASSIGNMENT, "="), $3);}
        ;
 
-fieldsep: COMMA { DPRINT("\nFIELDSEP: COMMA");}
-    | SEMICOLON { DPRINT("\nFIELDSEP: SEMICOLON");}
+fieldsep: COMMA { DPRINT("\nFIELDSEP: COMMA"); $$ = generateTerminal(COMMA, ",");}
+    | SEMICOLON { DPRINT("\nFIELDSEP: SEMICOLON"); $$ = NULL;}
 
-var: IDENTIFIER                                { DPRINT("\nVAR: id");}        
-       | exprP BRACKET_LEFT expr BRACKET_RIGHT { DPRINT("\nVAR: expr");}
-       | exprP DOT IDENTIFIER                  { DPRINT("\nVAR: dot");}
+var: IDENTIFIER                                { DPRINT("\nVAR: id"); $$ = generateTerminal(IDENTIFIER, $1);}
+       | exprP BRACKET_LEFT expr BRACKET_RIGHT { DPRINT("\nVAR: expr"); $$ = makeNode(N_STMT, 4, $1, generateTerminal(BRACKET_LEFT, "["), $3, generateTerminal(BRACKET_RIGHT, "]"));}
+       | exprP DOT IDENTIFIER                  { DPRINT("\nVAR: dot"); $$ = makeNode(N_STMT, 3, $1, generateTerminal(DOT, "."), generateTerminal(IDENTIFIER, $3));}
 
-exprP: PARENTHESIS_LEFT expr PARENTHESIS_RIGHT { DPRINT("\nEXPR_P: parenthesis");}
-       |call_function                          { DPRINT("\nEXPR_P: function call");}
-       |var                                    { DPRINT("\nEXPR_P: var");}
+exprP: PARENTHESIS_LEFT expr PARENTHESIS_RIGHT { DPRINT("\nEXPR_P: parenthesis"); $$ = makeNode(N_STMT, 3, generateTerminal(PARENTHESIS_LEFT, "("), $2, generateTerminal(PARENTHESIS_RIGHT, ")"));}
+       |call_function                          { DPRINT("\nEXPR_P: function call"); $$ = NULL;}
+       |var                                    { DPRINT("\nEXPR_P: var"); $$ = $1;}
 
-expr:  constant                { DPRINT("\nEXPR: const");}
-       |ELLIPSIS               { DPRINT("\nEXPR: elipsis");}
-       |exprP                  { DPRINT("\nEXPR: prefix");}
-       |expr bin_operator expr { DPRINT("\nEXPR: bin");}
-       |unary_operator expr    { DPRINT("\nEXPR: unary");}
+expr:  constant                { DPRINT("\nEXPR: const"); $$ = $1;}
+       |ELLIPSIS               { DPRINT("\nEXPR: elipsis"); $$ = generateTerminal(ELLIPSIS, "...");}
+       |exprP                  { DPRINT("\nEXPR: prefix"); $$ = $1;}
+       |expr bin_operator expr { DPRINT("\nEXPR: bin"); $$ = makeNode(N_STMT, 3, $1, $2, $3);}
+       |unary_operator expr    { DPRINT("\nEXPR: unary"); $$ = makeNode(N_STMT, 2, $1, $2);}
        ;
 
 bin_operator:
        // Arithmetic Operators
-       PLUS                 {DPRINT("\nBIN_OPERATOR: plus");}
-       |MINUS               {DPRINT("\nBIN_OPERATOR: minus");}
-       |ASTERISK            {DPRINT("\nBIN_OPERATOR: asterisk");}
-       |DIVIDE              {DPRINT("\nBIN_OPERATOR: divide");}
-       |CARET               {DPRINT("\nBIN_OPERATOR: caret");}
-       |FLOOR_DIVISION      {DPRINT("\nBIN_OPERATOR: floor_division");}
-       |MOD                 {DPRINT("\nBIN_OPERATOR: mod");}
+       PLUS                 {DPRINT("\nBIN_OPERATOR: plus"); $$ = generateTerminal(PLUS, "+");}
+       |MINUS               {DPRINT("\nBIN_OPERATOR: minus"); $$ = generateTerminal(MINUS, "-");}
+       |ASTERISK            {DPRINT("\nBIN_OPERATOR: asterisk"); $$ = generateTerminal(ASTERISK, "*");}
+       |DIVIDE              {DPRINT("\nBIN_OPERATOR: divide"); $$ = generateTerminal(DIVIDE, "/");}
+       |CARET               {DPRINT("\nBIN_OPERATOR: caret"); $$ = generateTerminal(CARET, "^");}
+       |FLOOR_DIVISION      {DPRINT("\nBIN_OPERATOR: floor_division"); $$ = generateTerminal(FLOOR_DIVISION, "//");}
+       |MOD                 {DPRINT("\nBIN_OPERATOR: mod"); $$ = generateTerminal(MOD, "%");}
        //Relational Operators
-       |EQUAL_TO            {DPRINT("\nBIN_OPERATOR: equal_to");}
-       |NOT_EQUAL_TO        {DPRINT("\nBIN_OPERATOR: not_equal_to");}
-       |LESS_EQUAL_TO       {DPRINT("\nBIN_OPERATOR: less_equal_to");}
-       |GREATER_EQUAL_TO    {DPRINT("\nBIN_OPERATOR: greater_equal_to");}
-       |LESS_THAN           {DPRINT("\nBIN_OPERATOR: less_than");}
-       |GREATER_THAN        {DPRINT("\nBIN_OPERATOR: greater_than");}
+       |EQUAL_TO            {DPRINT("\nBIN_OPERATOR: equal_to"); $$ = generateTerminal(EQUAL_TO, "==");}
+       |NOT_EQUAL_TO        {DPRINT("\nBIN_OPERATOR: not_equal_to"); $$ = generateTerminal(NOT_EQUAL_TO, "~=");}
+       |LESS_EQUAL_TO       {DPRINT("\nBIN_OPERATOR: less_equal_to"); $$ = generateTerminal(LESS_EQUAL_TO, "<=");}
+       |GREATER_EQUAL_TO    {DPRINT("\nBIN_OPERATOR: greater_equal_to"); $$ = generateTerminal(GREATER_EQUAL_TO, ">=");}
+       |LESS_THAN           {DPRINT("\nBIN_OPERATOR: less_than"); $$ = generateTerminal(LESS_THAN, "<");}
+       |GREATER_THAN        {DPRINT("\nBIN_OPERATOR: greater_than"); $$ = generateTerminal(GREATER_THAN, ">");}
        //Logical Operators
-       |KEYWORD_AND         {DPRINT("\nBIN_OPERATOR: keyword_and");}
-       |KEYWORD_OR          {DPRINT("\nBIN_OPERATOR: keyword_or");}
+       |KEYWORD_AND         {DPRINT("\nBIN_OPERATOR: keyword_and"); $$ = generateTerminal(KEYWORD_AND, "and");}
+       |KEYWORD_OR          {DPRINT("\nBIN_OPERATOR: keyword_or"); $$ = generateTerminal(KEYWORD_OR, "or");}
        //Concatenation Operator
-       |CONCATENATION       {DPRINT("\nBIN_OPERATOR: concatenation");}
+       |CONCATENATION       {DPRINT("\nBIN_OPERATOR: concatenation"); $$ = generateTerminal(CONCATENATION, "..");}
        //Bit-wise operators
-       |AMPERSAND           {DPRINT("\nBIN_OPERATOR: ampersand");}
-       |PIPE                {DPRINT("\nBIN_OPERATOR: pipe");}
-       |LEFT_SHIFT          {DPRINT("\nBIN_OPERATOR: left_shift");}
-       |RIGHT_SHIFT         {DPRINT("\nBIN_OPERATOR: right_shift");}
+       |AMPERSAND           {DPRINT("\nBIN_OPERATOR: ampersand"); $$ = generateTerminal(AMPERSAND, "&");}
+       |PIPE                {DPRINT("\nBIN_OPERATOR: pipe"); $$ = generateTerminal(PIPE, "|");}
+       |LEFT_SHIFT          {DPRINT("\nBIN_OPERATOR: left_shift"); $$ = generateTerminal(LEFT_SHIFT, "<<");}
+       |RIGHT_SHIFT         {DPRINT("\nBIN_OPERATOR: right_shift"); $$ = generateTerminal(RIGHT_SHIFT, ">>");}
        ;
 
-unary_operator: HASH {DPRINT("\nUNARY_OPERATOR: hash");}
-       |MINUS        {DPRINT("\nUNARY_OPERATOR: minus");}
-       |KEYWORD_NOT  {DPRINT("\nUNARY_OPERATOR: keyword_not");}
-       |TILDE        {DPRINT("\nUNARY_OPERATOR: tilde");}
+unary_operator: HASH {DPRINT("\nUNARY_OPERATOR: hash"); $$ = generateTerminal(HASH, "#");}
+       |MINUS        {DPRINT("\nUNARY_OPERATOR: minus"); $$ = generateTerminal(MINUS, "-");}
+       |KEYWORD_NOT  {DPRINT("\nUNARY_OPERATOR: keyword_not"); $$ = generateTerminal(KEYWORD_NOT, "not");}
+       |TILDE        {DPRINT("\nUNARY_OPERATOR: tilde"); $$ = generateTerminal(TILDE, "~");}
        ;
 %%
 
