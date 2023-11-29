@@ -119,12 +119,12 @@ loop_repeat_until: KEYWORD_REPEAT stmts KEYWORD_UNTIL expr { DPRINT("\nLOOP_REPE
        ;
 
 // If else block
-if_else_block: KEYWORD_IF expr KEYWORD_THEN stmts else_if_block { DPRINT("\nIF_ELSE_BLOCK"); $$ = makeNode(N_STMT, 5, generateTerminal(KEYWORD_IF, "if"), $2, generateTerminal(KEYWORD_THEN, "then"), $4, $5);}
+if_else_block: KEYWORD_IF expr KEYWORD_THEN stmts else_if_block { DPRINT("\nIF_ELSE_BLOCK"); $$ = makeNode(N_IFBLOCK, 3, $2, $4, $5);}
        ;
 
 else_if_block: KEYWORD_END                                   { DPRINT("\nelse_if_block: end"); $$ = generateTerminal(KEYWORD_END, "end");}
-       |KEYWORD_ELSEIF expr KEYWORD_THEN stmts else_if_block { DPRINT("\nelse_if_block: else if"); $$ = makeNode(N_STMT, 5, generateTerminal(KEYWORD_ELSEIF, "elseif"), $2, generateTerminal(KEYWORD_THEN, "then"), $4, $5);}
-       |KEYWORD_ELSE stmts KEYWORD_END                       { DPRINT("\nelse_if_block: else"); $$ = makeNode(N_STMT, 3, generateTerminal(KEYWORD_ELSE, "else"), $2, generateTerminal(KEYWORD_END, "end"));}
+       |KEYWORD_ELSEIF expr KEYWORD_THEN stmts else_if_block { DPRINT("\nelse_if_block: else if"); $$ = makeNode(N_IFBLOCK, 3, $2, $4, $5);}
+       |KEYWORD_ELSE stmts KEYWORD_END                       { DPRINT("\nelse_if_block: else"); $$ = makeNode(N_ELSE, 1, $2);}
        ;
 
 // Do block
@@ -188,7 +188,7 @@ sep_fields: fieldsep field sep_fields { DPRINT("\nSEP_FIELDS"); $$ = makeNode(N_
        | /*empty*/                    { DPRINT("\nSEP_FIELDS: empty"); $$ = NULL;}
        ;
 
-/* MAYBE CHANGE NEEDED*/
+/* MAYBE CHANGE NEEDED */
 field:  expr                                           { DPRINT("\nFIELDS"); $$ = $1;}
        | BRACKET_LEFT expr BRACKET_RIGHT ASSIGNMENT expr { DPRINT("\nFIELDS"); $$ = makeNode(N_STMT, 5, generateTerminal(BRACKET_LEFT, "["), $2, generateTerminal(BRACKET_RIGHT, "]"), generateTerminal(ASSIGNMENT, "="), $5);}
        | IDENTIFIER ASSIGNMENT expr                    { DPRINT("\nFIELDS"); $$ = makeNode(N_STMT, 3, generateTerminal(IDENTIFIER, $1), generateTerminal(ASSIGNMENT, "="), $3);}
@@ -262,8 +262,8 @@ int main()
     genIntCode(root, tacList);
 
     printf("TAC Code\n");
-    printf("____________________________________________________________________\n");
-    printf("Op\t\tArg1\t\tArg2\t\tResult\n");
+    printf("--------------------------------------------------------------------\n");
+    printf("Label\t|\tOp\t|\tArg1\t|\tArg2\t|\tResult\n");
     printTACList(tacList->next);
 
     return(0);

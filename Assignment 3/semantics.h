@@ -14,6 +14,8 @@ typedef enum _NodeType {
   N_EXPR,
   N_VAR,
   N_CONST,
+  N_IFBLOCK,
+  N_ELSE,
 } NodeType;
 
 typedef struct _Node{
@@ -52,7 +54,8 @@ typedef enum _TACArgType{
   TA_NULL,
   TA_BEGIN,
   TA_LITERAL,
-  TA_VARIABLE
+  TA_VARIABLE,
+  TA_LABEL,
 } TACArgType;
 
 typedef struct _TACArg{
@@ -62,7 +65,8 @@ typedef struct _TACArg{
 } TACArg;
 
 typedef enum _TACType {
-  TAC_ASSIGN,
+  TAC_NOP,
+  TAC_ASGN,
   TAC_ADD,
   TAC_SUB,
   TAC_MUL,
@@ -70,11 +74,24 @@ typedef enum _TACType {
   TAC_POW,
   TAC_DIF,
   TAC_MOD,
+  TAC_EQ,
+  TAC_NEQ,
+  TAC_LEQ,
+  TAC_GEQ,
+  TAC_LT,
+  TAC_GT,
+  TAC_AND,
+  TAC_OR,
+  TAC_CNCT,
+  TAC_AMPS,
+
+  TAC_GOTO,
+  TAC_GO_IF_FALSE,
 } TACType;
 
 typedef struct _TACList{
   TACType    op;
-  TACArg     *arg1, *arg2, *result;
+  TACArg     *arg1, *arg2, *result, *label;
   struct _TACList *next;
 } TACList;
 
@@ -82,11 +99,12 @@ TreeNode* makeNode         (NodeType t, int numChild, ...);
 TreeNode* generateTerminal (int token, char * const id);
 int       genIntCode       (TreeNode *root, TACList *f);
 int       newVar           (VarList* list, VarType type);
-TACArg* newArg(TACArgType type, char * nodeValue);
-TACArg* newTemp();
-TACArg* handleExpr(TreeNode* p, TACList *l);
-TACList* handleBin(TreeNode* arg1, TreeNode* op, TreeNode* arg2);
-TACType tokToOp(int token);
-void printOp(TACType op);
+TACArg*   newArg           (TACArgType type, char * nodeValue);
+TACArg*   newTemp          ();
+TACArg*   newLabel         ();
+TACArg*   handleExpr       (TreeNode* p, TACList *l);
+TACType   tokToOp          (int token);
+void      printOp          (TACType op);
+TACArg* handleIf(TreeNode* p, TACList *l, TACArg *beginLabel, TACArg *endLabel);
 
 #endif
