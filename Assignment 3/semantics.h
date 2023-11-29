@@ -16,6 +16,7 @@ typedef enum _NodeType {
   N_CONST,
   N_IFBLOCK,
   N_ELSE,
+  N_WHILE,
 } NodeType;
 
 typedef struct _Node{
@@ -99,6 +100,7 @@ TreeNode* makeNode         (NodeType t, int numChild, ...);
 TreeNode* generateTerminal (int token, char * const id);
 int       genIntCode       (TreeNode *root, TACList *f);
 int       newVar           (VarList* list, VarType type);
+TACList*  newTAC           (TACType op, TACArg *arg1, TACArg *arg2, TACArg *result, TACArg *label);
 TACArg*   newArg           (TACArgType type, char * nodeValue);
 TACArg*   newTemp          ();
 TACArg*   newLabel         ();

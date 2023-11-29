@@ -75,8 +75,8 @@ stmt: l_value ASSIGNMENT exprs              { DPRINT("\nstmt: assignment"); $$ =
        |loop_repeat_until                   { DPRINT("\nstmt: repeat");$$ = $1;}
        |if_else_block                       { DPRINT("\nstmt: if_else");$$ = $1;}
        |function_block                      { DPRINT("\nstmt: function");$$ = NULL;}
-       |KEYWORD_RETURN expr                 { DPRINT("\nstmt: return"); $$ = makeNode(N_STMT, 2, generateTerminal(KEYWORD_RETURN, "return"), $2);}
-       |KEYWORD_RETURN                      { DPRINT("\nstmt: return empty"); $$ = generateTerminal(KEYWORD_RETURN, "return");}
+       |KEYWORD_RETURN expr                 { DPRINT("\nstmt: return"); $$ = NULL;} // Useless without functions
+       |KEYWORD_RETURN                      { DPRINT("\nstmt: return empty"); $$ = NULL;}
        |call_function                       { DPRINT("\nstmt: function call"); $$ = NULL;}
        |KEYWORD_LOCAL ids                   { DPRINT("\nstmt: local"); $$ = makeNode(N_STMT, 2, generateTerminal(KEYWORD_LOCAL, "local"), $2);}
        |KEYWORD_LOCAL ids ASSIGNMENT exprs  { DPRINT("\nstmt: local"); $$ = makeNode(N_STMT, 4, generateTerminal(KEYWORD_LOCAL, "local"), $2, generateTerminal(ASSIGNMENT, "="), $4);}
@@ -98,7 +98,7 @@ exprs: expr COMMA exprs    { DPRINT("\nl_value: multiple"); $$ = makeNode(N_EXPR
        ;
 
 // Loops
-loop_while: KEYWORD_WHILE expr KEYWORD_DO stmts KEYWORD_END { DPRINT("\nloop_while"); $$ = makeNode(N_STMT, 5, generateTerminal(KEYWORD_WHILE, "while"), $2, generateTerminal(KEYWORD_DO, "do"), $4, generateTerminal(KEYWORD_END, "end"));}
+loop_while: KEYWORD_WHILE expr KEYWORD_DO stmts KEYWORD_END { DPRINT("\nloop_while"); $$ = makeNode(N_WHILE, 2, $2, $4);}
        ;
 
 loop_for: loop_for_generic { DPRINT("\nloop_for"); $$ = $1;}

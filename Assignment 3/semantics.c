@@ -89,28 +89,20 @@ int genIntCode(TreeNode *p, TACList *l){
         }
 
         TACList *last = l;
-        while (last->next) {
-          last = last->next;
-        }
+        while (last->next) { last = last->next; }
 
         genIntCode(rhs, l);
-        while (last->next) {
-          last = last->next;
-        }
+        while (last->next) { last = last->next; }
         TACList *iterRH = last;
 
-        TACList *newTAC = calloc(1, sizeof(TACList));
+        TACList *nTAC;
         TACArg *out = NULL;
         if(lhs->children[0]->token == IDENTIFIER) {
           out = newArg(TA_VARIABLE, lhs->children[0]->id);
         }
 
-        newTAC->op = TAC_ASGN;
-        newTAC->arg1 = iterRH->result;
-        newTAC->arg2 = NULL;
-        newTAC->result = out;
-
-        last->next = newTAC;
+        nTAC = newTAC(TAC_ASGN, iterRH->result, NULL, out, NULL);
+        last->next = nTAC;
 
         if (nextLhs != NULL && nextRhs != NULL){
           TreeNode *new = makeNode(N_ASGN, 2, nextLhs, nextRhs);
@@ -126,17 +118,13 @@ int genIntCode(TreeNode *p, TACList *l){
     case N_VAR:
       {
         TACArg *res = handleExpr(p, l);
-
-        TACList *newTAC = calloc(1, sizeof(TACList));
+        TACList *nTAC;
         TACList *last = l;
 
-        while (last->next) {
-          last = last->next;
-        }
+        while (last->next) { last = last->next; }
 
-        newTAC->op = TAC_NOP;
-        newTAC->result = res;
-        last->next = newTAC;
+        nTAC = newTAC(TAC_NOP, NULL, NULL, res, NULL);
+        last->next = nTAC;
         last = last->next;
 
         break;
@@ -144,6 +132,33 @@ int genIntCode(TreeNode *p, TACList *l){
     case N_IFBLOCK:{
         handleIf(p, l, NULL, NULL);
         break;
+      }
+    case N_WHILE: {
+        TACList *last = l;
+        TACArg *begin, *end;
+        TACList *nTAC;
+
+        while (last->next) { last = last->next; }
+        genIntCode(p->children[0], last);
+        last->next->label = newLabel();
+        begin = last->next->label;
+        while (last->next) { last = last->next; }
+
+        nTAC = newTAC(TAC_GO_IF_FALSE, last->result, NULL, newLabel(), NULL);
+        end = nTAC->result;
+        last->next = nTAC;
+        last = last->next;
+
+        genIntCode(p->children[1], last);
+        while (last->next) { last = last->next; }
+
+        nTAC = newTAC(TAC_GOTO, NULL, NULL, begin, NULL);
+        last->next = nTAC;
+        last = last->next;
+
+        nTAC = newTAC(TAC_NOP, NULL, NULL, NULL, end);
+        last->next = nTAC;
+        last = last->next;
       }
     default:
       printf("Invalid production rule detected %d\n", p->prodRule);
@@ -154,39 +169,30 @@ int genIntCode(TreeNode *p, TACList *l){
 
 TACArg* handleExpr(TreeNode* p, TACList *l){
   TACList *last = l;
-  while (last->next) {
-    last = last->next;
-  }
+  while (last->next) { last = last->next; }
   if(p->prodRule == N_EXPR && p->numChild == 3){
     /* Handle bin ops */
+    TACList *nTAC;
     TACArg *lhs = handleExpr(p->children[0], last);
     TACArg *rhs = handleExpr(p->children[2], last);
-    while (last->next) {
-      last = last->next;
-    }
-    TACList *newTAC = calloc(1, sizeof(TACList));
-    newTAC->op = tokToOp(p->children[1]->token);
-    newTAC->arg1 = lhs;
-    newTAC->arg2 = rhs;
-    newTAC->result = newTemp();
+    while (last->next) { last = last->next; }
 
-    last->next = newTAC;
+    nTAC = newTAC(tokToOp(p->children[1]->token), lhs, rhs, newTemp(), NULL);
+    last->next = nTAC;
     last = last->next;
-    return newTAC->result;
+
+    return nTAC->result;
   } else if (p->prodRule == N_EXPR && p->numChild == 2){
     /* Handle un ops */
+    TACList *nTAC;
     TACArg *arg = handleExpr(p->children[1], last);
-    while (last->next) {
-      last = last->next;
-    }
-    TACList *newTAC = calloc(1, sizeof(TACList));
-    newTAC->op = tokToOp(p->children[0]->token);
-    newTAC->arg1 = arg;
-    newTAC->result = newTemp();
+    while (last->next) { last = last->next; }
 
-    last->next = newTAC;
+    nTAC = newTAC(tokToOp(p->children[0]->token), arg, NULL, newTemp(), NULL);
+    last->next = nTAC;
     last = last->next;
-    return newTAC->result;
+
+    return nTAC->result;
   } else if(p->prodRule == N_CONST) {
     return newArg(TA_LITERAL, p->children[0]->id);
   } else if(p->prodRule == N_VAR){
@@ -201,84 +207,77 @@ TACArg* handleExpr(TreeNode* p, TACList *l){
 TACArg* handleIf(TreeNode* p, TACList *l, TACArg *begin, TACArg *end){
   TACList *last = l;
   TACArg *res, *nextBegin;
-  TACList *newTAC;
+  TACList *nTAC;
 
-  while (last->next) {
-    last = last->next;
-  }
+  while (last->next) { last = last->next; }
 
   if (p->prodRule == N_IFBLOCK){
     /* Condition */
     res = handleExpr(p->children[0], l);
     last->next->label = begin;
 
-    while (last->next) {
-      last = last->next;
-    }
+    while (last->next) { last = last->next; }
 
-    newTAC = calloc(1, sizeof(TACList));
-    newTAC->op = TAC_GO_IF_FALSE;
-    newTAC->arg1 = res;
-    newTAC->result = newLabel();
-    nextBegin = newTAC->result;
+    nTAC = newTAC(TAC_GO_IF_FALSE, res, NULL, newLabel(), NULL);
+    nextBegin = nTAC->result;
 
-    last->next = newTAC;
+    last->next = nTAC;
     last = last->next;
 
     /* then block */
     genIntCode(p->children[1], last);
-    while (last->next) {
-      last = last->next;
-    }
+    while (last->next) { last = last->next; }
 
     /* Goto end */
-    newTAC = calloc(1, sizeof(TACList));
-    newTAC->op = TAC_GOTO;
-    newTAC->result = end ? end : newLabel();
-    end = newTAC->result;
+    nTAC = newTAC(TAC_GOTO, NULL, NULL, end ? end : newLabel(), NULL);
+    end = nTAC->result;
 
-    last->next = newTAC;
+    last->next = nTAC;
     last = last->next;
 
     handleIf(p->children[2], l, nextBegin, end);
   }
   else if (p->prodRule == N_ELSE) {
-    while (last->next) {
-      last = last->next;
-    }
+    while (last->next) { last = last->next; }
     genIntCode(p->children[0], last);
     last->next->label = begin;
 
-    while (last->next) {
-      last = last->next;
-    }
+    while (last->next) { last = last->next; }
 
-    newTAC = calloc(1, sizeof(TACList));
-    newTAC->op = TAC_NOP;
-    newTAC->label = end;
-
-    last->next = newTAC;
+    nTAC = newTAC(TAC_NOP, NULL, NULL, NULL, end);
+    last->next = nTAC;
     last = last->next;
 
   }
   else if (p->token == KEYWORD_END){
     /** no else block */
-    newTAC = calloc(1, sizeof(TACList));
-    newTAC->op = TAC_NOP;
-    newTAC->label = begin;
-
-    last->next = newTAC;
+    nTAC = newTAC(TAC_NOP, NULL, NULL, NULL, begin);
+    last->next = nTAC;
     last = last->next;
 
-    newTAC = calloc(1, sizeof(TACList));
-    newTAC->op = TAC_NOP;
-    newTAC->label = end;
-
-    last->next = newTAC;
+    nTAC = newTAC(TAC_NOP, NULL, NULL, NULL, end);
+    last->next = nTAC;
     last = last->next;
   }
 
   return NULL;
+}
+
+TACList* newTAC(TACType op,
+                TACArg *arg1,
+                TACArg *arg2,
+                TACArg *result,
+                TACArg *label
+               )
+{
+  TACList *newTAC = calloc(1, sizeof(TACList));
+  newTAC->op = op;
+  newTAC->arg1 = arg1;
+  newTAC->arg2 = arg2;
+  newTAC->result = result;
+  newTAC->label = label;
+
+  return newTAC;
 }
 
 TACArg* newArg(TACArgType type, char * nodeValue){
