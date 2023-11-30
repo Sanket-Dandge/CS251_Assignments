@@ -78,11 +78,11 @@ stmt: l_value ASSIGNMENT exprs              { DPRINT("\nstmt: assignment"); $$ =
        |KEYWORD_RETURN expr                 { DPRINT("\nstmt: return"); $$ = NULL;} // Useless without functions
        |KEYWORD_RETURN                      { DPRINT("\nstmt: return empty"); $$ = NULL;}
        |call_function                       { DPRINT("\nstmt: function call"); $$ = NULL;}
-       |KEYWORD_LOCAL ids                   { DPRINT("\nstmt: local"); $$ = makeNode(N_STMT, 2, generateTerminal(KEYWORD_LOCAL, "local"), $2);}
-       |KEYWORD_LOCAL ids ASSIGNMENT exprs  { DPRINT("\nstmt: local"); $$ = makeNode(N_STMT, 4, generateTerminal(KEYWORD_LOCAL, "local"), $2, generateTerminal(ASSIGNMENT, "="), $4);}
+       |KEYWORD_LOCAL ids                   { DPRINT("\nstmt: local"); $$ = makeNode(N_LOCAL, 1, $2);}
+       |KEYWORD_LOCAL ids ASSIGNMENT exprs  { DPRINT("\nstmt: local"); $$ = makeNode(N_LOCAL, 2, $2, $4);}
        |KEYWORD_LOCAL function_local        { DPRINT("\nstmt: function local"); $$ = NULL;}
        |SEMICOLON                           { DPRINT("\nstmt: semicolon"); $$ = NULL;}
-       |KEYWORD_BREAK                       { DPRINT("\nstmt: break"); $$ = generateTerminal(KEYWORD_BREAK, "break");}
+       |KEYWORD_BREAK                       { DPRINT("\nstmt: break"); $$ = makeNode(N_BREAK, 0);}
        ;
 
 ids: IDENTIFIER COMMA ids { DPRINT("\nl_value: multiple"); $$ = makeNode(N_STMT, 3, generateTerminal(IDENTIFIER, $1), generateTerminal(COMMA, ","), $3);}

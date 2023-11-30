@@ -8,6 +8,8 @@
 
 int tempCount = 0;
 int labelCount = 0;
+Context *ctx = NULL;
+Context *globalCtx = NULL;
 void printArg(TACArg *a);
 
 TreeNode* makeNode(NodeType t, int numChild, ...){
@@ -59,11 +61,39 @@ int genIntCode(TreeNode *p, TACList *l){
 
   switch(p->prodRule){
     case N_PRG:
+      pushNewContext();
       genChildrens(p, l);
+      popContext();
       break;
     case N_STMTS:
       genChildrens(p, l);
       break;
+    case N_LOCAL:
+      /* If there is no assignment, simply create variable */
+      if(p->numChild == 1){
+        addVar(p->children[0]->id, VARTYPE_NIL, true);
+        break;
+      } else{
+        TACList *last = l;
+        while (last->next) { last = last->next; }
+
+        genIntCode(p->children[1], l);
+        while (last->next) { last = last->next; }
+        TACList *rh = last;
+
+        TACList *nTAC;
+        TACArg *out = NULL;
+        if(p->children[0]->token == IDENTIFIER) {
+          // If var does not exist in current scope, create it.
+          int pos = addVar(p->children[0]->id, VARTYPE_NIL, true);
+          out = newArg(TA_VARIABLE, p->children[0]->id);
+          out->depth = pos;
+        }
+
+        nTAC = newTAC(TAC_ASGN, rh->result, NULL, out, NULL);
+        last->next = nTAC;
+        break;
+      }
     case N_ASGN: {
         TreeNode* lhs     = NULL;
         TreeNode* nextLhs = NULL;
@@ -98,14 +128,16 @@ int genIntCode(TreeNode *p, TACList *l){
         TACList *nTAC;
         TACArg *out = NULL;
         if(lhs->children[0]->token == IDENTIFIER) {
+          int pos = addVar(lhs->children[0]->id, VARTYPE_NIL, false);
           out = newArg(TA_VARIABLE, lhs->children[0]->id);
+          out->depth = pos;
         }
 
         nTAC = newTAC(TAC_ASGN, iterRH->result, NULL, out, NULL);
         last->next = nTAC;
 
         if (nextLhs != NULL && nextRhs != NULL){
-          TreeNode *new = makeNode(N_ASGN, 2, nextLhs, nextRhs);
+          TreeNode *new = makeNode(p->prodRule, 2, nextLhs, nextRhs);
           genIntCode(new, l);
           free(new);
         }
@@ -138,6 +170,7 @@ int genIntCode(TreeNode *p, TACList *l){
         TACArg *begin, *end;
         TACList *nTAC;
 
+        pushNewContext();
         while (last->next) { last = last->next; }
         genIntCode(p->children[0], last);
         last->next->label = newLabel();
@@ -148,6 +181,7 @@ int genIntCode(TreeNode *p, TACList *l){
         end = nTAC->result;
         last->next = nTAC;
         last = last->next;
+        ctx->breakMarker = end;
 
         genIntCode(p->children[1], last);
         while (last->next) { last = last->next; }
@@ -159,9 +193,88 @@ int genIntCode(TreeNode *p, TACList *l){
         nTAC = newTAC(TAC_NOP, NULL, NULL, NULL, end);
         last->next = nTAC;
         last = last->next;
+        popContext();
+        break;
       }
+    case N_BREAK:{
+        TACList *last = l;
+        Context *ptr = ctx;
+        while (last->next) { last = last->next; }
+
+        while (ptr != NULL && ptr->breakMarker == NULL) {
+          ptr = ptr->parent;
+        }
+        if(ptr == NULL){
+          printf("break outside loop\nExiting...");
+          exit(1);
+        }
+        last->next = newTAC(TAC_GOTO, NULL, NULL, ctx->breakMarker, NULL);
+        last = last->next;
+
+
+        break;
+     }
     case N_FOR_NUM: {
         TACList *last = l;
+        TACArg *begin = newLabel();
+        TACArg *end = newLabel();
+        TACArg *i;
+        int loc;
+
+        pushNewContext();
+
+        while (last->next) { last = last->next; }
+        loc = addVar(p->children[0]->id, VARTYPE_NUM, true);
+        i = newArg(TA_VARIABLE, p->children[0]->id);
+        i->depth = loc;
+
+        genIntCode(p->children[1]->children[0], l);
+        while (last->next) { last = last->next; }
+
+        last->next = newTAC(TAC_ASGN, last->result, NULL, i, NULL);
+        last = last->next;
+
+        genIntCode(p->children[1]->children[1], l);
+        last->next->label = begin;
+        while (last->next) { last = last->next; }
+
+        last->next = newTAC(TAC_LEQ, i, last->result, newTemp(), NULL);
+        last = last->next;
+
+        last->next = newTAC(TAC_GO_IF_FALSE, last->result, NULL, end, NULL);
+        last = last->next;
+
+        // Generate the main statement block
+        genIntCode(p->children[2], l);
+        while (last->next) { last = last->next; }
+
+        // Increment
+        if(p->children[1]->numChild == 2){
+          TACArg *c = newArg(TA_LITERAL, "1");
+          last->next = newTAC(TAC_ADD, i, c, newTemp(), NULL);
+          last = last->next;
+
+          last->next = newTAC(TAC_ASGN, last->result, NULL, i, NULL);
+          last = last->next;
+        }
+        else{
+          genIntCode(p->children[1]->children[2], l);
+          while (last->next) { last = last->next; }
+
+          last->next = newTAC(TAC_ADD, i, last->result, newTemp(), NULL);
+          last = last->next;
+
+          last->next = newTAC(TAC_ASGN, last->result, NULL, i, NULL);
+          last = last->next;
+        }
+        last->next = newTAC(TAC_GOTO, NULL, NULL, begin, NULL);
+        last = last->next;
+
+        last->next = newTAC(TAC_NOP, NULL, NULL, NULL, end);
+        last = last->next;
+
+        popContext();
+
         break;
       }
     default:
@@ -200,7 +313,16 @@ TACArg* handleExpr(TreeNode* p, TACList *l){
   } else if(p->prodRule == N_CONST) {
     return newArg(TA_LITERAL, p->children[0]->id);
   } else if(p->prodRule == N_VAR){
-    return newArg(TA_VARIABLE, p->children[0]->id);
+    int loc = searchVar(p->children[0]->id);
+    TACArg* arg;
+    if (loc == -1){
+      printf("Variable `%s' used before assigining, assigining nil value to it\n", p->children[0]->id);
+      addVar(p->children[0]->id, VARTYPE_NIL, false);
+      loc = 0;
+    }
+    arg = newArg(TA_VARIABLE, p->children[0]->id);
+    arg->depth = loc;
+    return arg;
   } else {
     printf("Invalid expr debug error\n");
     exit(1);
@@ -229,7 +351,9 @@ TACArg* handleIf(TreeNode* p, TACList *l, TACArg *begin, TACArg *end){
     last = last->next;
 
     /* then block */
+    pushNewContext();
     genIntCode(p->children[1], last);
+    popContext();
     while (last->next) { last = last->next; }
 
     /* Goto end */
@@ -243,7 +367,9 @@ TACArg* handleIf(TreeNode* p, TACList *l, TACArg *begin, TACArg *end){
   }
   else if (p->prodRule == N_ELSE) {
     while (last->next) { last = last->next; }
+    pushNewContext();
     genIntCode(p->children[0], last);
+    popContext();
     last->next->label = begin;
 
     while (last->next) { last = last->next; }
@@ -293,7 +419,7 @@ TACArg* newArg(TACArgType type, char * nodeValue){
 
 TACArg* newTemp(){
   TACArg *newVar = calloc(1, sizeof(TACArg));
-  newVar->nodeType = TA_VARIABLE;
+  newVar->nodeType = TA_TMP_VAR;
   newVar->nodeValue = malloc(sizeof(char) * 10);
   bzero(newVar->nodeValue, 10);
   sprintf(newVar->nodeValue, "t%d", tempCount);
@@ -311,6 +437,40 @@ TACArg* newLabel(){
   labelCount++;
 
   return newVar;
+}
+
+Context *pushNewContext(){
+  Context *nCtx = calloc(1, sizeof(Context));
+  nCtx->parent = ctx;
+  nCtx->vars = NULL;
+
+  if(globalCtx == NULL) globalCtx = nCtx;
+  nCtx->depth = ctx ? ctx->depth + 1 : 0;
+
+  nCtx->breakMarker = NULL;
+  ctx = nCtx;
+
+  return nCtx;
+}
+
+void popContext(){
+  Context* currentContext = ctx;
+  VarList* tmpVars;
+  ctx = ctx->parent;
+
+  freeVarList(currentContext->vars);
+  free(currentContext);
+}
+
+void freeVarList(VarList* list){
+  VarList* tmpVars;
+  if (list == NULL) return;
+  while (list->next) {
+    tmpVars = list;
+    list = list->next;
+    free(tmpVars);
+  }
+
 }
 
 TACType tokToOp(int token){
@@ -357,7 +517,13 @@ void printTACList(TACList *list){
 
 void printArg(TACArg *a){
   if(a && a->nodeValue)
-    printf("%s", a->nodeValue);
+  {
+    if (a->nodeType == TA_VARIABLE){
+      printf("%s:%d", a->nodeValue, a->depth);
+    } else {
+      printf("%s", a->nodeValue);
+    }
+  }
 }
 void printOp(TACType op){
   switch (op) {
@@ -386,6 +552,45 @@ void printOp(TACType op){
     case TAC_GO_IF_FALSE: printf("IF_NOT"); break;
 
   }
+}
+
+int addVar(char* name, VarType type, bool local){
+  // If the local is set, it should be added to the current context, else check
+  // in all context, if not found add to global context
+  int loc = searchVar(name);
+  if(local && loc != ctx->depth){
+    VarList* nVar = calloc(1, sizeof(VarList));
+    nVar->name = strdup(name);
+    nVar->type = type;
+    if (ctx->vars != NULL) ctx->vars->next = nVar;
+    else ctx->vars = nVar;
+    return ctx->depth;
+  }
+  else if (loc == -1) {
+    /* Var doesn't exist in any context, add new global one */
+    VarList* nVar = calloc(1, sizeof(VarList));
+    nVar->name = strdup(name);
+    nVar->type = type;
+    if (globalCtx->vars != NULL) globalCtx->vars->next = nVar;
+    else globalCtx->vars = nVar;
+
+    return 0;
+  } else {
+    return loc;
+  }
+}
+int searchVar(char* name){
+  Context *pointer = ctx;
+  while (pointer) {
+    for(VarList *v = pointer->vars; v; v= v->next){
+      if(strcmp(v->name, name) == 0){
+        return pointer->depth;
+      }
+    }
+    pointer = pointer->parent;
+  }
+  // Not found
+  return -1;
 }
 /*
 case PIPE: return TAC_
