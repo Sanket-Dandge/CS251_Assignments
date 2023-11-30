@@ -160,6 +160,10 @@ int genIntCode(TreeNode *p, TACList *l){
         last->next = nTAC;
         last = last->next;
       }
+    case N_FOR_NUM: {
+        TACList *last = l;
+        break;
+      }
     default:
       printf("Invalid production rule detected %d\n", p->prodRule);
   }

@@ -17,6 +17,9 @@ typedef enum _NodeType {
   N_IFBLOCK,
   N_ELSE,
   N_WHILE,
+  N_FOR_NUM,
+  N_FOR_GEN,
+  N_INC,
 } NodeType;
 
 typedef struct _Node{
